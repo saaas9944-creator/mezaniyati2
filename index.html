@@ -1,0 +1,1327 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="الميزانية">
+<meta name="theme-color" content="#0d1117">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" type="image/png" href="icon.png">
+
+
+
+
+
+
+
+<rect width='100' height='100' rx='20' fill='%230d1117'/><text y='72' x='50' text-anchor='middle' font-size='65'>💰</text></svg>&quot;, &quot;sizes&quot;: &quot;192x192&quot;}]
+}">
+
+
+
+<title>الميزانية</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d1117;--card:#161b22;--card2:#1c2333;--border:#30363d;--accent:#58a6ff;--green:#3fb950;--red:#f85149;--yellow:#e3b341;--muted:#8b949e;--text:#e6edf3;--r:12px;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);direction:rtl;padding-bottom:90px;}
+
+/* HEADER */
+.hdr{background:var(--card);border-bottom:1px solid var(--border);padding:16px;position:sticky;top:0;z-index:99;}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.hdr h1{font-size:1.3rem;font-weight:900;color:var(--accent);}
+.mnav{display:flex;align-items:center;gap:8px;}
+.mnav button{background:var(--card2);border:1px solid var(--border);color:var(--accent);border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:.9rem;}
+.mnav span{font-size:.85rem;font-weight:700;min-width:100px;text-align:center;}
+.sal-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--accent);border-radius:10px;padding:8px 12px;margin-bottom:10px;}
+.sal-lbl{font-size:.72rem;color:var(--muted);}
+.sal-row input{background:transparent;border:none;outline:none;color:var(--accent);font-family:'Tajawal',sans-serif;font-size:1.1rem;font-weight:900;width:120px;text-align:left;direction:ltr;}
+.rem{font-size:.9rem;font-weight:800;}
+.pb-out{height:6px;background:var(--border);border-radius:99px;overflow:hidden;margin-bottom:8px;}
+.pb-in{height:100%;border-radius:99px;transition:width .3s,background .3s;}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+.stat{background:var(--bg);border-radius:8px;padding:7px;text-align:center;}
+.stat .v{font-size:.9rem;font-weight:800;}
+.stat .l{font-size:.68rem;color:var(--muted);}
+
+/* CATS */
+.cats{padding:10px;}
+.cat{background:var(--card2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:8px;overflow:hidden;transition:border-color .2s;}
+.cat.done{border-color:rgba(63,185,80,.4);}
+.cat.done .cat-hdr{opacity:.5;}
+.cat.done .cname{text-decoration:line-through;}
+
+.cat-hdr{display:flex;align-items:center;gap:8px;padding:11px 10px;}
+.chk{width:20px;height:20px;border-radius:5px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;cursor:pointer;}
+.cat.done .chk{background:var(--green);border-color:var(--green);}
+.chkico{display:none;}
+.cat.done .chkico{display:block;}
+
+.cname-wrap{flex:1;min-width:0;}
+.cname{background:transparent;border:none;outline:none;font-family:'Tajawal',sans-serif;font-size:.92rem;font-weight:700;color:var(--text);width:100%;cursor:text;}
+.cmeta{font-size:.7rem;color:var(--muted);margin-top:1px;}
+
+.camt-wrap{display:flex;align-items:center;gap:3px;flex-shrink:0;}
+.camt{background:transparent;border:none;border-bottom:1.5px solid var(--yellow);outline:none;font-family:'Tajawal',sans-serif;font-size:.88rem;font-weight:800;color:var(--yellow);width:70px;text-align:center;}
+.camt-lbl{font-size:.72rem;color:var(--muted);}
+.chev{color:var(--muted);font-size:.7rem;transition:transform .25s;cursor:pointer;padding:4px;}
+.cat.open .chev{transform:rotate(180deg);}
+
+/* SUBS */
+.sublist{max-height:0;overflow:hidden;transition:max-height .35s ease;}
+.cat.open .sublist{max-height:9999px;}
+
+.sub{display:flex;align-items:center;gap:8px;padding:8px 10px;border-top:1px solid var(--border);}
+.sub.done .sname{text-decoration:line-through;color:var(--muted);}
+.sub.done .sub-chk{background:var(--green);border-color:var(--green);}
+.sub-chk{width:16px;height:16px;border-radius:4px;border:2px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;}
+.sub-chk .chkico{display:none;}
+.sub.done .sub-chk .chkico{display:block;}
+.sname{background:transparent;border:none;outline:none;font-family:'Tajawal',sans-serif;font-size:.85rem;font-weight:500;color:var(--text);flex:1;min-width:0;width:0;}
+.samt-wrap{display:flex;align-items:center;gap:3px;flex-shrink:0;}
+.samt{background:transparent;border:none;border-bottom:1px solid var(--border);outline:none;font-family:'Tajawal',sans-serif;font-size:.82rem;font-weight:700;color:var(--text);width:62px;text-align:center;}
+.sdel{color:var(--red);font-size:.85rem;cursor:pointer;padding:0 4px;opacity:.4;flex-shrink:0;}
+.sdel:hover{opacity:1;}
+
+/* SUBSUBS */
+.ssub{display:flex;align-items:center;gap:8px;padding:7px 10px 7px 18px;border-top:1px solid rgba(255,255,255,.04);background:rgba(0,0,0,.2);}
+.ssub.done .ssname{text-decoration:line-through;color:var(--muted);}
+.ssub.done .ssub-chk{background:#bc8cff;border-color:#bc8cff;}
+.ssub-chk{width:13px;height:13px;border-radius:3px;border:1.5px solid var(--border);flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s;}
+.ssub-chk .chkico{display:none;}
+.ssub.done .ssub-chk .chkico{display:block;}
+.ssname{background:transparent;border:none;outline:none;font-family:'Tajawal',sans-serif;font-size:.78rem;color:var(--muted);flex:1;min-width:0;width:0;}
+.ssamt-wrap{display:flex;align-items:center;gap:3px;flex-shrink:0;}
+.ssamt{background:transparent;border:none;border-bottom:1px solid rgba(255,255,255,.1);outline:none;font-family:'Tajawal',sans-serif;font-size:.75rem;color:var(--muted);width:55px;text-align:center;}
+.ssdel{color:var(--red);font-size:.75rem;cursor:pointer;padding:0 3px;opacity:.4;}
+.ssdel:hover{opacity:1;}
+
+/* ADD BUTTONS - always visible below card */
+.add-btn{display:flex;align-items:center;gap:6px;padding:7px 10px;border-top:1px solid var(--border);color:var(--muted);font-size:.78rem;cursor:pointer;background:transparent;width:100%;border-left:none;border-right:none;border-bottom:none;font-family:'Tajawal',sans-serif;text-align:right;}
+.add-btn:hover{color:var(--accent);}
+.add-btn span{color:var(--accent);font-size:.95rem;font-weight:800;}
+
+/* inside sublist add-subsub */
+.add-ss-btn{display:flex;align-items:center;gap:5px;padding:6px 10px 6px 16px;padding-right:22px;border-top:1px solid rgba(255,255,255,.04);color:var(--muted);font-size:.71rem;cursor:pointer;}
+.add-ss-btn:hover{color:var(--accent);}
+.add-ss-btn span{color:var(--accent);}
+
+/* JAWWAL */
+.jwbar{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-top:1px solid rgba(227,179,65,.2);background:rgba(227,179,65,.05);}
+.jwdots{display:flex;gap:5px;}
+.jwdot{width:20px;height:20px;border-radius:50%;border:2px solid var(--yellow);font-size:.62rem;font-weight:800;display:flex;align-items:center;justify-content:center;color:var(--yellow);}
+.jwdot.paid{background:var(--yellow);color:#0d1117;}
+.jwbtn{background:var(--yellow);color:#0d1117;border:none;border-radius:7px;padding:4px 10px;font-family:'Tajawal',sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;}
+.jwbtn:disabled{opacity:.4;cursor:not-allowed;}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal-bg.show .modal{transition:transform .2s;}
+@supports(height:100dvh){
+  .modal-bg{align-items:flex-end;padding-bottom:env(safe-area-inset-bottom);}
+  .modal-bg .modal{width:100%;max-width:100%;border-radius:16px 16px 0 0;margin:0;}
+}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;width:88%;max-width:320px;}
+.modal h3{font-size:1rem;font-weight:800;margin-bottom:14px;color:var(--accent);}
+.modal input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:.95rem;margin-bottom:10px;outline:none;direction:rtl;}
+.modal input:focus{border-color:var(--accent);}
+.modal-btns{display:flex;gap:8px;margin-top:4px;}
+.modal-btns button{flex:1;padding:10px;border-radius:8px;border:none;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;}
+.m-ok{background:var(--accent);color:#0d1117;}
+.m-cancel{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
+
+/* BOTTOM */
+.export-bar{display:flex;gap:8px;padding:8px 14px;background:var(--card);border-top:1px solid var(--border);}
+.exp-btn{flex:1;padding:9px;border-radius:9px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;}
+.exp-btn:hover{border-color:var(--accent);color:var(--accent);}
+.bottom{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--border);padding:10px 14px;display:flex;gap:8px;}
+.btn{flex:1;padding:11px;border-radius:10px;border:none;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;}
+.btn-save{background:var(--accent);color:#0d1117;}
+.btn-reset{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
+
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <h1>💰 ميزانيتي</h1>
+    <div class="mnav">
+      <button onclick="chMonth(-1)">›</button>
+      <span id="mLbl"></span>
+      <button onclick="chMonth(1)">‹</button>
+    </div>
+  </div>
+  <div class="sal-row">
+    <div><div class="sal-lbl">الراتب</div>
+      <input type="number" id="salInp" oninput="salChanged()"/>
+    </div>
+    <div style="text-align:left">
+      <div class="sal-lbl">المتبقي</div>
+      <div class="rem" id="remEl">0 ر.س</div>
+    </div>
+  </div>
+  <div class="pb-out"><div class="pb-in" id="pbIn" style="width:0%"></div></div>
+  <div class="stats">
+    <div class="stat"><div class="v" id="stS" style="color:var(--accent)">0</div><div class="l">الراتب</div></div>
+    <div class="stat"><div class="v" id="stE" style="color:var(--red)">0</div><div class="l">المصروف</div></div>
+    <div class="stat"><div class="v" id="stR" style="color:var(--green)">0</div><div class="l">المتبقي</div></div>
+  </div>
+</div>
+
+<div class="cats" id="catsEl"></div>
+
+<div class="export-bar">
+  <button class="exp-btn" onclick="exportData()">📤 تصدير البيانات</button>
+  <button class="exp-btn" onclick="document.getElementById('importFile').click()">📥 استيراد البيانات</button>
+  <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)"/>
+</div>
+<div class="bottom">
+  <button class="btn btn-reset" onclick="resetMonth()">🔄 تصفير</button>
+  <button class="btn" style="background:var(--green);color:#0d1117;" onclick="addMainCat()">+ فئة</button>
+  <button class="btn btn-save"  onclick="doSave()">💾 حفظ</button>
+</div>
+
+<!-- MODAL -->
+
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-bg" id="delConfirmBg" onclick="if(event.target===this)closeDelConfirm()">
+  <div class="modal">
+    <h3 style="color:var(--red);">🗑 حذف البند</h3>
+    <p style="font-size:.9rem;color:var(--muted);margin:10px 0 16px;text-align:center;">هل أنت متأكد من حذف هذا البند؟</p>
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmDelete()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--red);color:white;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">حذف ✓</button>
+      <button onclick="closeDelConfirm()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT JAWWAL MODAL -->
+<div class="modal-bg" id="editJwBg" onclick="if(event.target===this)closeEditJw()">
+  <div class="modal" style="max-height:85vh;overflow-y:auto;">
+    <h3>✏️ تعديل البند المؤقت</h3>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">الاسم:</div>
+    <input type="text" id="ejName" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.95rem;margin-bottom:10px;outline:none;direction:rtl;"/>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">عدد الشهور الكلية:</div>
+    <input type="number" id="ejMonths" min="1" max="60" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.95rem;margin-bottom:10px;outline:none;"/>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">المبلغ الشهري:</div>
+    <input type="number" id="ejAmt" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.95rem;margin-bottom:12px;outline:none;"/>
+    <div style="display:flex;gap:8px;margin-bottom:12px;">
+      <button id="ejTypeSalary" onclick="setEjType('salary')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--accent);background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;">💰 من الراتب</button>
+      <button id="ejTypeCats" onclick="setEjType('cats')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;">📋 من بنود</button>
+    </div>
+    <div id="ejCatsSection" style="display:none;">
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">البنود المخصوم منها:</div>
+      <div id="ejDeductList" style="max-height:160px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px;margin-bottom:8px;"></div>
+      <button onclick="addEjDeductRow()" style="width:100%;padding:7px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.8rem;cursor:pointer;margin-bottom:10px;">+ إضافة بند خصم</button>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmEditJw()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">حفظ ✓</button>
+      <button onclick="closeEditJw()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MAIN CAT MODAL -->
+<div class="modal-bg" id="editMainBg" onclick="if(event.target===this)closeEditMain()">
+  <div class="modal" style="max-height:85vh;overflow-y:auto;">
+    <h3>⚙️ تعديل البند</h3>
+    <input type="text" id="emName" placeholder="الاسم" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.95rem;margin-bottom:10px;outline:none;direction:rtl;"/>
+    <input type="number" id="emAmt" placeholder="المبلغ" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.95rem;margin-bottom:12px;outline:none;"/>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">نوع البند:</div>
+    <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;">
+      <button id="emTypeNormal" onclick="setEmType('normal')" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--accent);background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;min-width:70px;">عادي ✓</button>
+      <button id="emTypeTemp" onclick="setEmType('temp')" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;min-width:70px;">مؤقت ⏳</button>
+      <button id="emTypeExtra" onclick="setEmType('extra')" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;min-width:70px;">دخل آخر 💵</button>
+    </div>
+    <div id="emTempSection" style="display:none;">
+      <input type="number" id="emMonths" placeholder="عدد الشهور" min="1" value="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.9rem;margin-bottom:10px;outline:none;"/>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <button id="emDeductSalary" onclick="setEmDeductType('salary')" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--accent);background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;">💰 من الراتب</button>
+        <button id="emDeductCats" onclick="setEmDeductType('cats')" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;">📋 من بنود</button>
+      </div>
+      <div id="emDeductCatsSection" style="display:none;">
+        <div id="emDeductList" style="max-height:150px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px;margin-bottom:8px;"></div>
+        <button onclick="addEmDeductRow()" style="width:100%;padding:7px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.8rem;cursor:pointer;margin-bottom:8px;">+ إضافة بند خصم</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmEditMain()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">حفظ ✓</button>
+      <button onclick="closeEditMain()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SUB MODAL -->
+<div class="modal-bg" id="subCatBg" onclick="if(event.target===this)closeSubModal()">
+  <div class="modal" style="max-height:85vh;overflow-y:auto;">
+    <h3>➕ إضافة فئة فرعية</h3>
+    <input type="text" id="scName" placeholder="الاسم" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.95rem;margin-bottom:10px;outline:none;direction:rtl;"/>
+    <input type="number" id="scAmt" placeholder="المبلغ (ر.س)" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.95rem;margin-bottom:12px;outline:none;"/>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button id="scTypeNormal" onclick="setScType('normal')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--accent);background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.82rem;font-weight:800;cursor:pointer;">عادي ✓</button>
+      <button id="scTypeTemp" onclick="setScType('temp')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.82rem;font-weight:800;cursor:pointer;">مؤقت ⏳</button>
+      <button id="scTypeExtra" onclick="setScType('extra')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.82rem;font-weight:800;cursor:pointer;">دخل آخر 💵</button>
+    </div>
+    <div id="scTempOptions" style="display:none;">
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">عدد الشهور:</div>
+      <input type="number" id="scMonths" placeholder="عدد الشهور" min="1" max="60" value="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.95rem;margin-bottom:10px;outline:none;"/>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">المبلغ يُنقص من هذا البند تلقائياً كل شهر</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmSubCat()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إضافة ✓</button>
+      <button onclick="closeSubModal()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MAIN CAT MODAL -->
+<div class="modal-bg" id="mainCatBg" onclick="if(event.target===this)closeMainModal()">
+  <div class="modal" style="max-height:85vh;overflow-y:auto;">
+    <h3>➕ إضافة بند رئيسي</h3>
+    <input type="text" id="mcName" placeholder="اسم البند" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.95rem;margin-bottom:10px;outline:none;direction:rtl;"/>
+    <input type="number" id="mcAmt" placeholder="المبلغ (ر.س)" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.95rem;margin-bottom:12px;outline:none;"/>
+    <div style="display:flex;gap:8px;margin-bottom:14px;">
+      <button id="mcTypeNormal" onclick="setMcType('normal')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--accent);background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;">عادي ✓</button>
+      <button id="mcTypeTemp" onclick="setMcType('temp')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;">مؤقت ⏳</button>
+      <button id="mcTypeExtra" onclick="setMcType('extra')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;">دخل آخر 💵</button>
+    </div>
+    <div id="mcTempOptions" style="display:none;">
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">عدد الشهور:</div>
+      <input type="number" id="mcMonths" placeholder="عدد الشهور" min="1" max="60" value="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.95rem;margin-bottom:10px;outline:none;"/>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <button id="mcDeductTypeSalary" onclick="setMcDeductType('salary')" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--accent);background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;">ينقص من الراتب 💰</button>
+        <button id="mcDeductTypeCats" onclick="setMcDeductType('cats')" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;">ينقص من بنود 📋</button>
+      </div>
+      <div id="mcDeductCatsSection" style="display:none;">
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">ينقص من البنود التالية:</div>
+        <div id="mcDeductList" style="max-height:200px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:6px;margin-bottom:10px;"></div>
+        <button onclick="addDeductRow()" style="width:100%;padding:8px;background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.82rem;cursor:pointer;margin-bottom:10px;">+ إضافة بند خصم</button>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmMainCat()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إضافة ✓</button>
+      <button onclick="closeMainModal()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)modalClose()">
+  <div class="modal">
+    <h3 id="modalTitle">إضافة فئة فرعية</h3>
+    <input type="text"   id="mName" placeholder="الاسم"/>
+    <input type="number" id="mAmt"  placeholder="المبلغ (ر.س)"/>
+    <div class="modal-btns">
+      <button class="m-ok"     onclick="modalOk()">إضافة ✓</button>
+      <button class="m-cancel" onclick="modalClose()">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+
+
+<script>
+// ══════════════════════════════════════════════════
+// DEFAULT CATEGORIES
+// ══════════════════════════════════════════════════
+const DEFAULTS=[
+  {id:'unplanned',name:'مصاريف غير محسوبة 💳',amt:540,chk:false,open:false,subs:[
+    {id:'u1',name:'إيكيا',amt:241.25,chk:false,subs:[]}
+  ]},
+  {id:'ishraf',name:'الإشراف 🏠',amt:1500,chk:false,open:false,subs:[
+    {id:'i1',name:'استثمار دراهم',amt:700,chk:false,subs:[]},
+    {id:'i2',name:'ادخار',amt:800,chk:false,subs:[]}
+  ]},
+  {id:'wknds',name:'ويكيندات (تساهيل) 🛍️',amt:479,chk:false,open:false,subs:[]},
+  {id:'food',name:'مطاعم 🍔',amt:1861,chk:false,open:false,subs:[]},
+  {id:'groc',name:'سوبرماركت 🛒',amt:2070,chk:false,open:false,subs:[
+    {id:'g1',name:'سوبرماركت يومي',amt:620,chk:false,subs:[]},
+    {id:'g2',name:'سوبرماركت أسبوعي',amt:1450,chk:false,subs:[]},
+    {id:'g3',name:'أمازون',amt:21,chk:false,subs:[]},
+    {id:'g4',name:'54-',amt:54,chk:false,subs:[]}
+  ]},
+  {id:'subs',name:'اشتراكات 📱',amt:998.55,chk:false,open:false,subs:[
+    {id:'sb1',name:'موبايلي',amt:248,chk:false,subs:[]},
+    {id:'sb2',name:'كهرباء',amt:377,chk:false,subs:[]},
+    {id:'sb3',name:'قسط الثلث (تساهيل)',amt:170,chk:false,subs:[]},
+    {id:'sb4',name:'مايكروسوفت لـ 6 أشهر 🖥️',amt:46,chk:false,subs:[]},
+    {id:'sb5',name:'المجازي',amt:36.55,chk:false,subs:[]},
+    {id:'sb6',name:'فاتورة جوال',amt:121,chk:false,subs:[]}
+  ]},
+  {id:'loan',name:'القرض 💳',amt:481,chk:false,open:false,subs:[
+    {id:'l1',name:'الأقساط',amt:481,chk:false,subs:[
+      {id:'l1a',name:'هدية نادية',amt:84,chk:false},
+      {id:'l1b',name:'58 حامدة',amt:58,chk:false},
+      {id:'l1c',name:'23 ليوم الأخير',amt:23,chk:false}
+    ]}
+  ]},
+  {id:'hamida',name:'1000 حامدة ❤️❤️❤️❤️',amt:1000,chk:false,open:false,subs:[]},
+  {id:'travel',name:'سياحة ✈️',amt:700,chk:false,open:false,subs:[]},
+  {id:'miriam',name:'صدقة مريم — ادخار للشهر 5 🌸',amt:500,chk:false,open:false,subs:[]},
+  {id:'sadaqa',name:'صدقتي 200 — للادخار الشهر 5',amt:200,chk:false,open:false,subs:[]},
+  {id:'shabab',name:'صدقة الشباب',amt:0,chk:false,open:false,subs:[]},
+  {id:'petrol',name:'بنزين ⛽',amt:200,chk:false,open:false,subs:[]},
+  {id:'dirah',name:'500 الديرة 🏙️',amt:500,chk:false,open:false,subs:[]},
+  {id:'ahli',name:'450 الأهلي 🏦',amt:450,chk:false,open:false,subs:[
+    {id:'a1',name:'50 زيت سيارة',amt:50,chk:false,subs:[]},
+    {id:'a2',name:'200 احتياطي سنوي',amt:200,chk:false,subs:[]},
+    {id:'a3',name:'200 صيانة سيارة',amt:200,chk:false,subs:[]}
+  ]},
+  {id:'lastweek',name:'300 آخر أسبوع 🗓️',amt:300,chk:false,open:false,subs:[]},
+  {id:'myex',name:'200 مصروفي',amt:200,chk:false,open:false,subs:[]},
+  {id:'qamrjana',name:'500 قمرجنة 👧👧👧👧👧',amt:500,chk:false,open:false,subs:[]},
+  {id:'health',name:'200 صحة 🩺🩺🩺🩺🩺',amt:200,chk:false,open:false,subs:[]},
+  {id:'shagala',name:'280 شغالة',amt:280,chk:false,open:false,subs:[]},
+  {id:'gift',name:'500 هدية 🎁',amt:500,chk:false,open:false,subs:[
+    {id:'gf1',name:'101 عالي للادخار',amt:101,chk:false,subs:[]},
+    {id:'gf2',name:'50 عالي اروماتيك تمارا',amt:50,chk:false,subs:[]}
+  ]},
+  {id:'jawwal',name:'قسط جوالي 1000 💳',amt:0,chk:false,open:false,
+   isJawwal:true,jawwalMonths:5,jawwalPaid:0,
+   jawwalMap:[
+     {catId:'myex',amt:200},{catId:'qamrjana',amt:200},{catId:'unplanned',amt:200},
+     {catId:'travel',amt:100},{catId:'wknds',amt:100},{catId:'lastweek',amt:70},{catId:'gift',amt:130}
+   ],
+   subs:[
+     {id:'jw1',name:'200 من مصروفي',amt:200,chk:false,subs:[]},
+     {id:'jw2',name:'200 من قمرجنة',amt:200,chk:false,subs:[]},
+     {id:'jw3',name:'200 من مصاريف غير محسوبة',amt:200,chk:false,subs:[]},
+     {id:'jw4',name:'100 من السياحة',amt:100,chk:false,subs:[]},
+     {id:'jw5',name:'100 من ويكئندات',amt:100,chk:false,subs:[]},
+     {id:'jw6',name:'70 من شغل خارج الراتب',amt:70,chk:false,subs:[]},
+     {id:'jw7',name:'130 من هدية',amt:130,chk:false,subs:[]}
+   ]}
+];
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+const MNS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+let CM=new Date().getMonth(), CY=new Date().getFullYear();
+const mkey=()=>`bgt3_${CY}_${CM}`;
+const skey=()=>`sal3_${CY}_${CM}`;
+const dc=x=>JSON.parse(JSON.stringify(x));
+const loadCats=()=>{try{const r=localStorage.getItem(mkey());if(r)return JSON.parse(r);}catch(e){}return dc(DEFAULTS);};
+const loadSal=()=>{const s=localStorage.getItem(skey());return s?parseFloat(s):16367;};
+let cats=loadCats(), salary=loadSal();
+
+// ══════════════════════════════════════════════════
+// RECALC: subs sum → parent (skip jawwal)
+// ══════════════════════════════════════════════════
+function recalc(){
+  cats.forEach(cat=>{
+    if(cat.isJawwal) return;
+    if(!cat.subs||!cat.subs.length) return;
+    cat.subs.forEach(sub=>{
+      if(sub.subs&&sub.subs.length){
+        sub.subs.forEach(ss=>{
+          if(ss.subs&&ss.subs.length) ss.amt=ss.subs.reduce((s,s3)=>s+s3.amt,0);
+        });
+        sub.amt=sub.subs.reduce((s,ss)=>s+ss.amt,0);
+      }
+    });
+  });
+}
+
+// ══════════════════════════════════════════════════
+// SPENT: only unchecked, skip jawwal
+// ══════════════════════════════════════════════════
+function calcSpent(){
+  return cats.reduce((total,cat)=>{
+    if(cat.isJawwal||cat.isExtra) return total;
+    if(cat.chk) return total;
+    // الفرعيات المشيكة فقط تنقص من الأساسي
+    const checkedSubsAmt=cat.subs?cat.subs.reduce((s,sub)=>sub.chk?s+(parseFloat(sub.amt)||0):s,0):0;
+    return total+Math.max(0,cat.amt-checkedSubsAmt);
+  },0);
+}
+
+// ══════════════════════════════════════════════════
+// UPDATE HEADER
+// ══════════════════════════════════════════════════
+function updateHdr(){
+  document.getElementById('salInp').value=salary;
+  const spent=calcSpent(), rem=salary-spent;
+  const pct=salary>0?Math.min(100,spent/salary*100):0;
+  const pb=document.getElementById('pbIn');
+  pb.style.width=pct+'%';
+  pb.style.background=pct<70?'#3fb950':pct<90?'#e3b341':'#f85149';
+  const re=document.getElementById('remEl');
+  re.textContent=fmt(rem)+' ر.س';
+  re.style.color=rem>=0?'var(--green)':'var(--red)';
+  document.getElementById('stS').textContent=fmt(salary);
+  document.getElementById('stE').textContent=fmt(spent);
+  document.getElementById('stR').textContent=fmt(rem);
+}
+const fmt=n=>Math.round(n).toLocaleString('ar-SA');
+
+// ══════════════════════════════════════════════════
+// AUTOSAVE
+// ══════════════════════════════════════════════════
+function autoSave(){
+  try{
+    localStorage.setItem(mkey(),JSON.stringify(cats));
+    localStorage.setItem(skey(),salary);
+  }catch(e){}
+}
+
+// ══════════════════════════════════════════════════
+// RENDER
+// ══════════════════════════════════════════════════
+const SVG_CHK=`<svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" class="chkico"><polyline points="2,6 5,9 10,3"/></svg>`;
+const SVG_CHK_SM=`<svg width="8" height="8" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" class="chkico"><polyline points="2,6 5,9 10,3"/></svg>`;
+const SVG_CHK_XS=`<svg width="7" height="7" viewBox="0 0 12 12" fill="none" stroke="white" stroke-width="2.5" class="chkico"><polyline points="2,6 5,9 10,3"/></svg>`;
+
+function render(){
+  recalc();
+  document.getElementById('mLbl').textContent=MNS[CM]+' '+CY;
+  const el=document.getElementById('catsEl');
+  el.innerHTML='';
+  cats.forEach((cat,ci)=>el.appendChild(mkCat(cat,ci)));
+  updateHdr();
+}
+
+function mkCat(cat,ci){
+  const hasSubs=cat.subs&&cat.subs.length>0;
+  const div=document.createElement('div');
+  div.className='cat'+(cat.chk?' done':'')+(cat.open?' open':'');
+  if(cat.isExtra) div.style.borderColor='rgba(63,185,80,.3)';
+
+  // ── header ──
+  const hdr=document.createElement('div');
+  hdr.className='cat-hdr';
+
+  // checkbox
+  const chkDiv=document.createElement('div');
+  chkDiv.className='chk';chkDiv.innerHTML=SVG_CHK;
+  chkDiv.onclick=e=>{e.stopPropagation();toggleCat(ci);};
+  hdr.appendChild(chkDiv);
+
+  // name
+  const nWrap=document.createElement('div');nWrap.className='cname-wrap';
+  const nInp=document.createElement('input');
+  nInp.className='cname';nInp.type='text';nInp.value=cat.name;
+  nInp.onclick=e=>e.stopPropagation();
+  nInp.onchange=e=>{cat.name=e.target.value;autoSave();};
+  nWrap.appendChild(nInp);
+  // meta
+  if(hasSubs&&!cat.isJawwal){
+    const m=document.createElement('div');m.className='cmeta';
+    m.textContent=cat.subs.filter(s=>s.chk).length+'/'+cat.subs.length+' مكتمل';
+    nWrap.appendChild(m);
+  }
+  if(cat.isJawwal){
+    const m=document.createElement('div');m.className='cmeta';
+    m.style.color='var(--yellow)';
+    m.textContent='دُفع '+(cat.jawwalPaid||0)+' من '+cat.jawwalMonths+' أشهر';
+    nWrap.appendChild(m);
+  }
+  hdr.appendChild(nWrap);
+
+  // amount
+  const aWrap=document.createElement('div');aWrap.className='camt-wrap';
+  const aInp=document.createElement('input');
+  aInp.className='camt';aInp.type='number';
+  // إذا في فرعيات، اعرض مجموع غير المشيكة فقط
+  aInp.value=cat.amt;
+  aInp.onclick=e=>e.stopPropagation();
+  if(hasSubs||cat.isJawwal){
+    aInp.readOnly=true;aInp.style.opacity='.6';
+  } else {
+    aInp.oninput=e=>{cat.amt=parseFloat(e.target.value)||0;autoSave();updateHdr();};
+  }
+  aWrap.appendChild(aInp);
+  const aLbl=document.createElement('span');aLbl.className='camt-lbl';aLbl.textContent='ر.س';
+  aWrap.appendChild(aLbl);
+  // خانة ثانية: المتبقي بعد الفرعيات (بلون خفيف)
+  if(hasSubs&&!cat.isJawwal){
+    const subsTotal=cat.subs.reduce((s,sub)=>s+(parseFloat(sub.amt)||0),0);
+    const remaining=cat.amt-subsTotal;
+    if(subsTotal>0){
+      const remWrap=document.createElement('div');
+      remWrap.style.cssText='display:flex;align-items:center;gap:2px;flex-shrink:0;';
+      const remVal=document.createElement('span');
+      remVal.style.cssText='font-size:.75rem;font-weight:700;color:'+(remaining>=0?'var(--muted)':'var(--red)')+';white-space:nowrap;';
+      remVal.textContent=(remaining>=0?'↓':'⚠️')+Math.abs(Math.round(remaining));
+      const remLbl=document.createElement('span');
+      remLbl.style.cssText='font-size:.65rem;color:var(--muted);';
+      remLbl.textContent='ر.س';
+      remWrap.appendChild(remVal);remWrap.appendChild(remLbl);
+      aWrap.appendChild(remWrap);
+    }
+  }
+  hdr.appendChild(aWrap);
+
+  // chevron if has subs
+  if(hasSubs||cat.isJawwal){
+    const ch=document.createElement('span');ch.className='chev';ch.textContent='▼';
+    ch.onclick=e=>{e.stopPropagation();cat.open=!cat.open;render();};
+    hdr.appendChild(ch);
+    hdr.style.cursor='pointer';
+    hdr.onclick=()=>{cat.open=!cat.open;render();};
+  }
+  // زر تعديل نوع البند (للبنود العادية)
+  if(!cat.isJawwal){
+    const editTypeBtn=document.createElement('span');
+    editTypeBtn.textContent='⚙️';
+    editTypeBtn.style.cssText='font-size:.8rem;cursor:pointer;padding:0 3px;opacity:.4;flex-shrink:0;';
+    editTypeBtn.title='تعديل البند';
+    editTypeBtn.onclick=e=>{e.stopPropagation();editMainCat(ci);};
+    hdr.appendChild(editTypeBtn);
+  }
+  // زر حذف البند الرئيسي
+  const delCat=document.createElement('span');
+  delCat.textContent='🗑';
+  delCat.style.cssText='font-size:.85rem;cursor:pointer;padding:0 4px;opacity:.4;flex-shrink:0;';
+  delCat.title='حذف البند';
+  delCat.onclick=e=>{e.stopPropagation();showDeleteConfirm(ci);};
+  hdr.appendChild(delCat);
+  div.appendChild(hdr);
+
+  // ── jawwal bar ──
+  if(cat.isJawwal){
+    const bar=document.createElement('div');bar.className='jwbar';
+    const dots=document.createElement('div');dots.className='jwdots';
+    for(let i=0;i<cat.jawwalMonths;i++){
+      const d=document.createElement('div');
+      d.className='jwdot'+(i<(cat.jawwalPaid||0)?' paid':'');
+      d.textContent=i+1;dots.appendChild(d);
+    }
+    const btnWrap=document.createElement('div');btnWrap.style.cssText='display:flex;gap:6px;align-items:center;';
+    // زر تعديل
+    const editBtn=document.createElement('button');
+    editBtn.style.cssText='background:var(--card2);color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:4px 8px;font-family:Tajawal,sans-serif;font-size:.72rem;cursor:pointer;';
+    editBtn.textContent='✏️';
+    editBtn.onclick=e=>{e.stopPropagation();editJawwal(ci);};
+    const jBtn=document.createElement('button');jBtn.className='jwbtn';
+    jBtn.textContent='✓ دفعت شهر';
+    jBtn.disabled=(cat.jawwalPaid||0)>=cat.jawwalMonths;
+    jBtn.onclick=e=>{e.stopPropagation();payJawwal(ci);};
+    btnWrap.appendChild(editBtn);btnWrap.appendChild(jBtn);
+    bar.appendChild(dots);bar.appendChild(btnWrap);
+    div.appendChild(bar);
+  }
+
+  // ── subs list ──
+  if(hasSubs){
+    const sl=document.createElement('div');sl.className='sublist';
+    cat.subs.forEach((sub,si)=>{
+      // sub row
+      const sDiv=document.createElement('div');
+      sDiv.className='sub'+(sub.chk?' done':'');
+      if(sub.isExtra) sDiv.style.borderRight='2px solid var(--green)';
+      if(sub.isTemp) sDiv.style.borderRight='2px solid var(--yellow)';
+
+      const sChk=document.createElement('div');sChk.className='sub-chk';sChk.innerHTML=SVG_CHK_SM;
+      sChk.onclick=e=>{e.stopPropagation();toggleSub(ci,si);};
+      sDiv.appendChild(sChk);
+
+      const snInp=document.createElement('input');
+      snInp.className='sname';snInp.type='text';snInp.value=sub.name;
+      snInp.onclick=e=>e.stopPropagation();
+      snInp.onchange=e=>{sub.name=e.target.value;autoSave();};
+      sDiv.appendChild(snInp);
+      if(sub.isTemp){
+        const tBadge=document.createElement('span');
+        tBadge.style.cssText='font-size:.65rem;color:var(--yellow);white-space:nowrap;margin-left:4px;flex-shrink:0;';
+        tBadge.textContent=(sub.tempPaid||0)+'/'+sub.tempMonths+'شهر';
+        sDiv.appendChild(tBadge);
+      }
+      if(sub.isExtra){
+        const eBadge=document.createElement('span');
+        eBadge.style.cssText='font-size:.65rem;color:var(--green);white-space:nowrap;margin-left:4px;flex-shrink:0;';
+        eBadge.textContent='💵';
+        sDiv.appendChild(eBadge);
+      }
+
+      const saWrap=document.createElement('div');saWrap.className='samt-wrap';
+      const saInp=document.createElement('input');
+      saInp.className='samt';saInp.type='number';saInp.value=sub.amt;
+      saInp.onclick=e=>e.stopPropagation();
+      if(sub.subs&&sub.subs.length){
+        saInp.readOnly=true;saInp.style.opacity='.6';
+      } else {
+        saInp.oninput=e=>{sub.amt=parseFloat(e.target.value)||0;autoSave();updateHdr();};
+      }
+      saWrap.appendChild(saInp);
+      const saLbl=document.createElement('span');saLbl.className='camt-lbl';saLbl.textContent='ر.س';
+      saWrap.appendChild(saLbl);
+      // خانة هامشية للفرعي إذا فيه فرعي فرعي
+      if(sub.subs&&sub.subs.length){
+        const subChecked=sub.subs.reduce((s,ss)=>ss.chk?s+(parseFloat(ss.amt)||0):s,0);
+        const subRem=sub.amt-subChecked;
+        if(sub.subs.some(ss=>ss.amt>0)){
+          const remSp=document.createElement('span');
+          remSp.style.cssText='font-size:.68rem;font-weight:700;color:'+(subRem<=0?'var(--green)':'var(--muted)')+';white-space:nowrap;margin-right:2px;';
+          remSp.textContent=(subRem<=0?'✓':('↓'+Math.round(subRem)));
+          saWrap.appendChild(remSp);
+        }
+      }
+      sDiv.appendChild(saWrap);
+
+      if(!cat.isJawwal){
+        const del=document.createElement('span');del.className='sdel';del.textContent='✕';
+        del.onclick=e=>{e.stopPropagation();delSub(ci,si);};
+        sDiv.appendChild(del);
+      }
+      sl.appendChild(sDiv);
+
+      // subsubs
+      if(sub.subs&&sub.subs.length){
+        sub.subs.forEach((ss,ssi)=>{
+          const ssDiv=document.createElement('div');
+          ssDiv.className='ssub'+(ss.chk?' done':'');
+
+          const ssChk=document.createElement('div');ssChk.className='ssub-chk';ssChk.innerHTML=SVG_CHK_XS;
+          ssChk.onclick=e=>{e.stopPropagation();toggleSSub(ci,si,ssi);};
+          ssDiv.appendChild(ssChk);
+
+          const ssnInp=document.createElement('input');
+          ssnInp.className='ssname';ssnInp.type='text';ssnInp.value=ss.name;
+          ssnInp.onclick=e=>e.stopPropagation();
+          ssnInp.onchange=e=>{ss.name=e.target.value;autoSave();};
+          ssDiv.appendChild(ssnInp);
+
+          const ssaWrap=document.createElement('div');ssaWrap.className='ssamt-wrap';
+          const ssaInp=document.createElement('input');
+          ssaInp.className='ssamt';ssaInp.type='number';ssaInp.value=ss.amt;
+          ssaInp.onclick=e=>e.stopPropagation();
+          ssaInp.oninput=e=>{ss.amt=parseFloat(e.target.value)||0;recalc();autoSave();updateHdr();render();};
+          ssaWrap.appendChild(ssaInp);
+          const ssaLbl=document.createElement('span');ssaLbl.className='camt-lbl';ssaLbl.textContent='ر.س';
+          ssaWrap.appendChild(ssaLbl);
+          ssDiv.appendChild(ssaWrap);
+
+          const ssDel=document.createElement('span');ssDel.className='ssdel';ssDel.textContent='✕';
+          ssDel.onclick=e=>{e.stopPropagation();delSSub(ci,si,ssi);};
+          ssDiv.appendChild(ssDel);
+          sl.appendChild(ssDiv);
+        });
+      }
+
+      // add subsub button inside sublist per sub
+      if(!cat.isJawwal){
+        const addSS=document.createElement('div');
+        addSS.style.cssText='display:flex;align-items:center;gap:5px;padding:5px 10px 5px 16px;padding-right:24px;border-top:1px solid var(--border);color:var(--muted);font-size:.71rem;cursor:pointer;';
+        addSS.innerHTML='<span style="color:var(--accent);font-size:.8rem">+</span> إضافة فرعي';
+        addSS.onmouseover=e=>addSS.style.color='var(--accent)';
+        addSS.onmouseout=e=>addSS.style.color='var(--muted)';
+        addSS.onclick=e=>{e.stopPropagation();addSSub(ci,si);};
+        sl.appendChild(addSS);
+      }
+    });
+    div.appendChild(sl);
+  }
+
+  // ── add sub button (always visible) ──
+  if(!cat.isJawwal){
+    const addBtn=document.createElement('button');
+    addBtn.className='add-btn';
+    addBtn.innerHTML='<span>+</span> إضافة فئة فرعية';
+    addBtn.onclick=e=>{e.stopPropagation();addSub(ci);};
+    div.appendChild(addBtn);
+  }
+
+  return div;
+}
+
+// ══════════════════════════════════════════════════
+// TOGGLE ACTIONS
+// ══════════════════════════════════════════════════
+function toggleCat(ci){
+  const c=cats[ci];
+  if(c.subs&&c.subs.length){
+    const v=!c.subs.every(s=>s.chk);
+    c.subs.forEach(s=>{s.chk=v;if(s.subs)s.subs.forEach(ss=>ss.chk=v);});
+    c.chk=v;
+  } else { c.chk=!c.chk; }
+  autoSave();render();
+}
+
+function autoCheckParent(ci){
+  const cat=cats[ci];
+  if(!cat.subs||!cat.subs.length) return;
+  const checkedAmt=cat.subs.reduce((s,sub)=>sub.chk?s+(parseFloat(sub.amt)||0):s,0);
+  cat.chk=(cat.amt-checkedAmt)<=0;
+}
+
+function autoCheckSub(ci,si){
+  const sub=cats[ci].subs[si];
+  if(!sub.subs||!sub.subs.length) return;
+  const checkedAmt=sub.subs.reduce((s,ss)=>ss.chk?s+(parseFloat(ss.amt)||0):s,0);
+  sub.chk=(sub.amt-checkedAmt)<=0;
+  // بعدها نتحقق من الأساسي
+  autoCheckParent(ci);
+}
+
+function toggleSub(ci,si){
+  const sub=cats[ci].subs[si];
+  sub.chk=!sub.chk;
+  if(sub.subs&&sub.subs.length) sub.subs.forEach(ss=>ss.chk=sub.chk);
+  autoCheckParent(ci);
+  autoSave();render();
+}
+
+function toggleSSub(ci,si,ssi){
+  const ss=cats[ci].subs[si].subs[ssi];
+  ss.chk=!ss.chk;
+  if(ss.subs&&ss.subs.length) ss.subs.forEach(s3=>s3.chk=ss.chk);
+  // تحقق من الفرعي ثم الأساسي
+  autoCheckSub(ci,si);
+  autoSave();render();
+}
+
+// ══════════════════════════════════════════════════
+// ADD / DELETE
+// ══════════════════════════════════════════════════
+let _mcb=null;
+function showModal(title,cb){
+  document.getElementById('modalTitle').textContent=title;
+  document.getElementById('mName').value='';
+  document.getElementById('mAmt').value='';
+  document.getElementById('modalBg').classList.add('show');
+  setTimeout(()=>document.getElementById('mName').focus(),100);
+  _mcb=cb;
+}
+function modalClose(){document.getElementById('modalBg').classList.remove('show');_mcb=null;}
+function modalOk(){
+  const name=document.getElementById('mName').value.trim();
+  const amt=parseFloat(document.getElementById('mAmt').value)||0;
+  if(!name){document.getElementById('mName').focus();return;}
+  const cb=_mcb;
+  modalClose();
+  if(cb)cb(name,amt);
+}
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'&&document.getElementById('modalBg').classList.contains('show'))modalOk();
+  if(e.key==='Escape')modalClose();
+});
+
+let _scType='normal', _scCi=-1;
+
+function addSub(ci){
+  _scCi=ci;
+  _scType='normal';
+  document.getElementById('scName').value='';
+  document.getElementById('scAmt').value='';
+  document.getElementById('scMonths').value='5';
+  document.getElementById('scTempOptions').style.display='none';
+  setScType('normal');
+  document.getElementById('subCatBg').classList.add('show');
+  setTimeout(()=>document.getElementById('scName').focus(),100);
+}
+
+function closeSubModal(){document.getElementById('subCatBg').classList.remove('show');}
+
+function setScType(t){
+  _scType=t;
+  const nb=document.getElementById('scTypeNormal');
+  const tb=document.getElementById('scTypeTemp');
+  const eb=document.getElementById('scTypeExtra');
+  [nb,tb,eb].forEach(b=>{b.style.background='transparent';b.style.color='var(--muted)';b.style.borderColor='var(--border)';});
+  document.getElementById('scTempOptions').style.display='none';
+  if(t==='normal'){
+    nb.style.background='var(--accent)';nb.style.color='#0d1117';nb.style.borderColor='var(--accent)';
+  } else if(t==='temp'){
+    tb.style.background='var(--yellow)';tb.style.color='#0d1117';tb.style.borderColor='var(--yellow)';
+    document.getElementById('scTempOptions').style.display='block';
+  } else {
+    eb.style.background='var(--green)';eb.style.color='#0d1117';eb.style.borderColor='var(--green)';
+  }
+}
+
+function confirmSubCat(){
+  const name=document.getElementById('scName').value.trim();
+  const amt=parseFloat(document.getElementById('scAmt').value)||0;
+  if(!name){document.getElementById('scName').focus();return;}
+  const ci=_scCi;
+  if(!cats[ci].subs) cats[ci].subs=[];
+  if(_scType==='extra'){
+    cats[ci].subs.push({id:'s'+Date.now(),name,amt,chk:false,subs:[],isExtra:true});
+  } else if(_scType==='temp'){
+    const months=parseInt(document.getElementById('scMonths').value)||1;
+    cats[ci].subs.push({id:'s'+Date.now(),name,amt,chk:false,subs:[],isTemp:true,tempMonths:months,tempPaid:0});
+  } else {
+    cats[ci].subs.push({id:'s'+Date.now(),name,amt,chk:false,subs:[]});
+  }
+  cats[ci].open=true;
+  closeSubModal();
+  recalc();autoSave();render();
+}
+
+function delSub(ci,si){
+  cats[ci].subs.splice(si,1);
+  recalc();autoSave();render();
+}
+
+function addSSub(ci,si){
+  showModal('إضافة فرعي',(name,amt)=>{
+    cats[ci].subs[si].subs=cats[ci].subs[si].subs||[];
+    cats[ci].subs[si].subs.push({id:'ss'+Date.now(),name,amt,chk:false});
+    recalc();autoSave();render();
+  });
+}
+
+function delSSub(ci,si,ssi){
+  cats[ci].subs[si].subs.splice(ssi,1);
+  recalc();autoSave();render();
+}
+
+// ══════════════════════════════════════════════════
+// JAWWAL
+// ══════════════════════════════════════════════════
+function payJawwal(ci){
+  const c=cats[ci];const paid=c.jawwalPaid||0;
+  if(paid>=c.jawwalMonths)return;
+  if(!confirm('تأكيد: دفعت قسط هذا الشهر؟'))return;
+  c.jawwalPaid=paid+1;
+  if(c.jawwalPaid>=c.jawwalMonths){
+    // استعادة البنود عند الانتهاء
+    if(c.jawwalType==='cats'&&c.jawwalMap){
+      c.jawwalMap.forEach(m=>{
+        const t=cats.find(x=>x.id===m.catId);
+        if(t)t.amt=(parseFloat(t.amt)||0)+m.amt;
+      });
+    }
+    setTimeout(()=>alert('🎉 تم سداد القسط كاملاً! ✅'),100);
+  }
+  autoSave();render();
+}
+
+// ══════════════════════════════════════════════════
+// OTHER
+// ══════════════════════════════════════════════════
+function salChanged(){salary=parseFloat(document.getElementById('salInp').value)||0;autoSave();updateHdr();}
+
+let _mcType='normal', _mcDeductType='salary';
+let _deductRows=[];
+
+function setMcDeductType(t){
+  _mcDeductType=t;
+  const sb=document.getElementById('mcDeductTypeSalary');
+  const cb=document.getElementById('mcDeductTypeCats');
+  const sec=document.getElementById('mcDeductCatsSection');
+  if(t==='salary'){
+    sb.style.background='var(--accent)';sb.style.color='#0d1117';sb.style.borderColor='var(--accent)';
+    cb.style.background='transparent';cb.style.color='var(--muted)';cb.style.borderColor='var(--border)';
+    sec.style.display='none';
+  } else {
+    cb.style.background='var(--yellow)';cb.style.color='#0d1117';cb.style.borderColor='var(--yellow)';
+    sb.style.background='transparent';sb.style.color='var(--muted)';sb.style.borderColor='var(--border)';
+    sec.style.display='block';
+  }
+}
+
+function addMainCat(){
+  _mcType='normal';
+  _mcDeductType='salary';
+  _deductRows=[];
+  document.getElementById('mcName').value='';
+  document.getElementById('mcAmt').value='';
+  document.getElementById('mcMonths').value='5';
+  document.getElementById('mcDeductList').innerHTML='';
+  document.getElementById('mcTempOptions').style.display='none';
+  document.getElementById('mcDeductCatsSection').style.display='none';
+  setMcType('normal');
+  document.getElementById('mainCatBg').classList.add('show');
+  setTimeout(()=>document.getElementById('mcName').focus(),100);
+}
+
+function closeMainModal(){
+  document.getElementById('mainCatBg').classList.remove('show');
+}
+
+function setMcType(t){
+  _mcType=t;
+  const nb=document.getElementById('mcTypeNormal');
+  const tb=document.getElementById('mcTypeTemp');
+  const eb=document.getElementById('mcTypeExtra');
+  const opts=document.getElementById('mcTempOptions');
+  // reset all
+  [nb,tb,eb].forEach(b=>{b.style.background='transparent';b.style.color='var(--muted)';b.style.borderColor='var(--border)';});
+  opts.style.display='none';
+  if(t==='normal'){
+    nb.style.background='var(--accent)';nb.style.color='#0d1117';nb.style.borderColor='var(--accent)';
+  } else if(t==='temp'){
+    tb.style.background='var(--yellow)';tb.style.color='#0d1117';tb.style.borderColor='var(--yellow)';
+    opts.style.display='block';
+    renderDeductList();
+  } else {
+    eb.style.background='var(--green)';eb.style.color='#0d1117';eb.style.borderColor='var(--green)';
+  }
+}
+
+function renderDeductList(){
+  const el=document.getElementById('mcDeductList');
+  el.innerHTML='';
+  _deductRows.forEach((row,i)=>{
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:6px;';
+    // cat select
+    const sel=document.createElement('select');
+    sel.style.cssText='flex:1;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.8rem;';
+    cats.filter(ct=>!ct.isJawwal).forEach(ct=>{
+      const op=document.createElement('option');
+      op.value=ct.id;op.textContent=ct.name;
+      if(ct.id===row.catId)op.selected=true;
+      sel.appendChild(op);
+    });
+    sel.onchange=e=>{_deductRows[i].catId=e.target.value;};
+    // amt input
+    const inp=document.createElement('input');
+    inp.type='number';inp.value=row.amt||0;inp.placeholder='المبلغ';
+    inp.style.cssText='width:65px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.8rem;text-align:center;';
+    inp.oninput=e=>{_deductRows[i].amt=parseFloat(e.target.value)||0;};
+    // del
+    const del=document.createElement('span');
+    del.textContent='✕';del.style.cssText='color:var(--red);cursor:pointer;font-size:.9rem;padding:0 2px;';
+    del.onclick=()=>{_deductRows.splice(i,1);renderDeductList();};
+    div.appendChild(sel);div.appendChild(inp);div.appendChild(del);
+    el.appendChild(div);
+  });
+}
+
+function addDeductRow(){
+  const firstCat=cats.find(ct=>!ct.isJawwal);
+  _deductRows.push({catId:firstCat?firstCat.id:'',amt:0});
+  renderDeductList();
+}
+
+function confirmMainCat(){
+  const name=document.getElementById('mcName').value.trim();
+  const amt=parseFloat(document.getElementById('mcAmt').value)||0;
+  if(!name){document.getElementById('mcName').focus();return;}
+  
+  if(_mcType==='extra'){
+    // دخل آخر — خارج حسابات الميزانية تماماً
+    cats.push({id:'c'+Date.now(),name,amt,chk:false,open:false,subs:[],isExtra:true});
+  } else if(_mcType==='normal'){
+    cats.push({id:'c'+Date.now(),name,amt,chk:false,open:false,subs:[]});
+  } else {
+    const months=parseInt(document.getElementById('mcMonths').value)||1;
+    if(_mcDeductType==='salary'){
+      // ينقص من الراتب مباشرة
+      cats.push({
+        id:'c'+Date.now(),name,amt,chk:false,open:false,
+        isJawwal:true,jawwalMonths:months,jawwalPaid:0,
+        jawwalType:'salary',jawwalMap:[],subs:[]
+      });
+    } else {
+      // ينقص من بنود محددة — خصم فعلي فوري
+      const jwMap=_deductRows.filter(r=>r.catId&&r.amt>0);
+      // خصم فعلي من كل بند
+      jwMap.forEach(m=>{
+        const t=cats.find(x=>x.id===m.catId);
+        if(t) t.amt=Math.max(0,(parseFloat(t.amt)||0)-m.amt);
+      });
+      cats.push({
+        id:'c'+Date.now(),name,amt:0,chk:false,open:false,
+        isJawwal:true,jawwalMonths:months,jawwalPaid:0,
+        jawwalType:'cats',jawwalMap:jwMap,
+        subs:jwMap.map((r,i)=>({
+          id:'jx'+Date.now()+i,
+          name:(parseFloat(r.amt)||0)+' من '+(cats.find(ct=>ct.id===r.catId)||{name:r.catId}).name,
+          amt:r.amt,chk:false,subs:[]
+        }))
+      });
+    }
+  }
+  closeMainModal();
+  autoSave();render();
+}
+let _editJwCi=-1, _ejType='salary', _ejRows=[];
+let _delCi=-1;
+
+function showDeleteConfirm(ci){_delCi=ci;document.getElementById('delConfirmBg').classList.add('show');}
+function closeDelConfirm(){document.getElementById('delConfirmBg').classList.remove('show');}
+function confirmDelete(){cats.splice(_delCi,1);closeDelConfirm();autoSave();render();}
+
+function setEjType(t){
+  _ejType=t;
+  const sb=document.getElementById('ejTypeSalary');
+  const cb=document.getElementById('ejTypeCats');
+  const sec=document.getElementById('ejCatsSection');
+  [sb,cb].forEach(b=>{b.style.background='transparent';b.style.color='var(--muted)';b.style.borderColor='var(--border)';});
+  if(t==='salary'){
+    sb.style.background='var(--accent)';sb.style.color='#0d1117';sb.style.borderColor='var(--accent)';
+    sec.style.display='none';
+  } else {
+    cb.style.background='var(--yellow)';cb.style.color='#0d1117';cb.style.borderColor='var(--yellow)';
+    sec.style.display='block';
+    renderEjDeductList();
+  }
+}
+
+function renderEjDeductList(){
+  const el=document.getElementById('ejDeductList');
+  el.innerHTML='';
+  _ejRows.forEach((row,i)=>{
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:6px;';
+    const sel=document.createElement('select');
+    sel.style.cssText='flex:1;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.78rem;';
+    cats.filter(ct=>!ct.isJawwal&&ct.id!==cats[_editJwCi]?.id).forEach(ct=>{
+      const op=document.createElement('option');
+      op.value=ct.id;op.textContent=ct.name;
+      if(ct.id===row.catId)op.selected=true;
+      sel.appendChild(op);
+    });
+    sel.onchange=e=>{_ejRows[i].catId=e.target.value;};
+    const inp=document.createElement('input');
+    inp.type='number';inp.value=row.amt||0;
+    inp.style.cssText='width:65px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.78rem;text-align:center;';
+    inp.oninput=e=>{_ejRows[i].amt=parseFloat(e.target.value)||0;};
+    const del=document.createElement('span');
+    del.textContent='✕';del.style.cssText='color:var(--red);cursor:pointer;font-size:.85rem;';
+    del.onclick=()=>{_ejRows.splice(i,1);renderEjDeductList();};
+    div.appendChild(sel);div.appendChild(inp);div.appendChild(del);
+    el.appendChild(div);
+  });
+}
+
+function addEjDeductRow(){
+  const first=cats.find(ct=>!ct.isJawwal);
+  _ejRows.push({catId:first?first.id:'',amt:0});
+  renderEjDeductList();
+}
+
+function editJawwal(ci){
+  _editJwCi=ci;
+  const cat=cats[ci];
+  _ejType=cat.jawwalType||'salary';
+  _ejRows=cat.jawwalMap?cat.jawwalMap.map(r=>({catId:r.catId,amt:r.amt})):[];
+  document.getElementById('ejName').value=cat.name;
+  document.getElementById('ejMonths').value=cat.jawwalMonths;
+  document.getElementById('ejAmt').value=cat.amt||0;
+  document.getElementById('editJwBg').classList.add('show');
+  setEjType(_ejType);
+  setTimeout(()=>document.getElementById('ejName').focus(),100);
+}
+
+function closeEditJw(){document.getElementById('editJwBg').classList.remove('show');}
+
+function confirmEditJw(){
+  const cat=cats[_editJwCi];
+  const name=document.getElementById('ejName').value.trim();
+  const m=parseInt(document.getElementById('ejMonths').value)||1;
+  const amt=parseFloat(document.getElementById('ejAmt').value)||0;
+  if(name) cat.name=name;
+  cat.jawwalMonths=Math.max(cat.jawwalPaid||0, m);
+  cat.jawwalType=_ejType;
+  if(_ejType==='salary'){
+    cat.amt=amt;
+    cat.jawwalMap=[];
+    cat.subs=[];
+  } else {
+    const validRows=_ejRows.filter(r=>r.catId&&r.amt>0);
+    cat.jawwalMap=validRows;
+    cat.subs=validRows.map((r,i)=>({
+      id:'jx'+Date.now()+i,
+      name:r.amt+' من '+(cats.find(ct=>ct.id===r.catId)||{name:r.catId}).name,
+      amt:r.amt,chk:false,subs:[]
+    }));
+  }
+  closeEditJw();
+  autoSave();render();
+}
+
+let _emCi=-1, _emType='normal', _emDeductType='salary', _emRows=[];
+
+function editMainCat(ci){
+  _emCi=ci; const cat=cats[ci];
+  _emType=cat.isExtra?'extra':'normal';
+  _emDeductType='salary'; _emRows=[];
+  document.getElementById('emName').value=cat.name;
+  document.getElementById('emAmt').value=cat.amt||0;
+  document.getElementById('editMainBg').classList.add('show');
+  setEmType(_emType);
+  setTimeout(()=>document.getElementById('emName').focus(),100);
+}
+function closeEditMain(){document.getElementById('editMainBg').classList.remove('show');}
+
+function setEmType(t){
+  _emType=t;
+  const btns={normal:'emTypeNormal',temp:'emTypeTemp',extra:'emTypeExtra'};
+  const colors={normal:'var(--accent)',temp:'var(--yellow)',extra:'var(--green)'};
+  Object.keys(btns).forEach(k=>{
+    const b=document.getElementById(btns[k]);
+    b.style.background='transparent';b.style.color='var(--muted)';b.style.borderColor='var(--border)';
+  });
+  const b=document.getElementById(btns[t]);
+  b.style.background=colors[t];b.style.color='#0d1117';b.style.borderColor=colors[t];
+  document.getElementById('emTempSection').style.display=t==='temp'?'block':'none';
+}
+
+function setEmDeductType(t){
+  _emDeductType=t;
+  const sb=document.getElementById('emDeductSalary');
+  const cb=document.getElementById('emDeductCats');
+  [sb,cb].forEach(b=>{b.style.background='transparent';b.style.color='var(--muted)';b.style.borderColor='var(--border)';});
+  if(t==='salary'){
+    sb.style.background='var(--accent)';sb.style.color='#0d1117';sb.style.borderColor='var(--accent)';
+    document.getElementById('emDeductCatsSection').style.display='none';
+  } else {
+    cb.style.background='var(--yellow)';cb.style.color='#0d1117';cb.style.borderColor='var(--yellow)';
+    document.getElementById('emDeductCatsSection').style.display='block';
+    renderEmDeductList();
+  }
+}
+
+function renderEmDeductList(){
+  const el=document.getElementById('emDeductList');el.innerHTML='';
+  _emRows.forEach((row,i)=>{
+    const div=document.createElement('div');div.style.cssText='display:flex;align-items:center;gap:6px;margin-bottom:6px;';
+    const sel=document.createElement('select');
+    sel.style.cssText='flex:1;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.78rem;';
+    cats.filter(ct=>!ct.isJawwal&&ct.id!==cats[_emCi]?.id).forEach(ct=>{
+      const op=document.createElement('option');op.value=ct.id;op.textContent=ct.name;
+      if(ct.id===row.catId)op.selected=true;sel.appendChild(op);
+    });
+    sel.onchange=e=>{_emRows[i].catId=e.target.value;};
+    const inp=document.createElement('input');inp.type='number';inp.value=row.amt||0;
+    inp.style.cssText='width:65px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:5px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.78rem;text-align:center;';
+    inp.oninput=e=>{_emRows[i].amt=parseFloat(e.target.value)||0;};
+    const del=document.createElement('span');del.textContent='✕';del.style.cssText='color:var(--red);cursor:pointer;';
+    del.onclick=()=>{_emRows.splice(i,1);renderEmDeductList();};
+    div.appendChild(sel);div.appendChild(inp);div.appendChild(del);el.appendChild(div);
+  });
+}
+function addEmDeductRow(){
+  const first=cats.find(ct=>!ct.isJawwal);
+  _emRows.push({catId:first?first.id:'',amt:0});
+  renderEmDeductList();
+}
+
+function confirmEditMain(){
+  const cat=cats[_emCi];
+  const name=document.getElementById('emName').value.trim();
+  const amt=parseFloat(document.getElementById('emAmt').value)||0;
+  if(name) cat.name=name;
+  if(_emType==='extra'){
+    cat.isExtra=true; cat.isJawwal=false; cat.amt=amt;
+  } else if(_emType==='temp'){
+    const months=parseInt(document.getElementById('emMonths').value)||1;
+    cat.isExtra=false; cat.isJawwal=true;
+    cat.jawwalMonths=months; cat.jawwalPaid=cat.jawwalPaid||0;
+    cat.jawwalType=_emDeductType;
+    if(_emDeductType==='salary'){
+      cat.amt=amt; cat.jawwalMap=[]; cat.subs=[];
+    } else {
+      const valid=_emRows.filter(r=>r.catId&&r.amt>0);
+      // خصم فعلي
+      valid.forEach(m=>{const t=cats.find(x=>x.id===m.catId);if(t)t.amt=Math.max(0,t.amt-m.amt);});
+      cat.jawwalMap=valid;
+      cat.subs=valid.map((r,i)=>({id:'jx'+Date.now()+i,name:r.amt+' من '+(cats.find(ct=>ct.id===r.catId)||{name:''}).name,amt:r.amt,chk:false,subs:[]}));
+    }
+  } else {
+    cat.isExtra=false; cat.isJawwal=false; cat.amt=amt;
+  }
+  closeEditMain(); autoSave(); render();
+}
+
+function doSave(){
+  autoSave();
+}
+
+function resetMonth(){
+  if(!confirm('تصفير هذا الشهر؟'))return;
+  cats=dc(DEFAULTS);salary=16367;autoSave();render();
+}
+
+function chMonth(d){
+  autoSave();CM+=d;
+  if(CM>11){CM=0;CY++;}if(CM<0){CM=11;CY--;}
+  cats=loadCats();salary=loadSal();render();
+}
+
+function exportData(){
+  const data={
+    version:1,
+    month:CM, year:CY,
+    salary:salary,
+    cats:cats,
+    extraCats:typeof extraCats!=='undefined'?extraCats:[],
+    exportDate:new Date().toLocaleDateString('ar-SA')
+  };
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='الميزانية_'+CY+'_'+(CM+1)+'.json';
+  a.click();
+}
+
+function importData(e){
+  const file=e.target.files[0];
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const data=JSON.parse(ev.target.result);
+      if(!data.cats){alert('ملف غير صحيح');return;}
+      if(!confirm('سيتم استبدال بيانات الشهر الحالي. متأكد؟'))return;
+      cats=data.cats;
+      salary=data.salary||salary;
+      if(data.extraCats&&typeof extraCats!=='undefined') extraCats=data.extraCats;
+      autoSave();
+      if(typeof renderExtraCats==='function') renderExtraCats();
+      render();
+      alert('✅ تم الاستيراد بنجاح!');
+    }catch(err){alert('خطأ في قراءة الملف');}
+  };
+  reader.readAsText(file);
+  e.target.value='';
+}
+
+// Fix keyboard covering inputs on mobile
+document.addEventListener('focusin', e=>{
+  if(e.target.tagName==='INPUT'){
+    setTimeout(()=>{
+      e.target.scrollIntoView({behavior:'smooth', block:'center'});
+    }, 300);
+  }
+});
+
+// Generate app icon via canvas
+(function(){
+  try {
+    const canvas = document.createElement('canvas');
+    canvas.width = 192; canvas.height = 192;
+    const ctx = canvas.getContext('2d');
+    // background
+    const rr = (x,y,w,h,r) => {ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();};
+    rr(0,0,192,192,36); ctx.fillStyle='#0d1117'; ctx.fill();
+    // bag body
+    ctx.beginPath(); ctx.ellipse(110,115,52,58,0,0,Math.PI*2); ctx.fillStyle='#e8a020'; ctx.fill();
+    ctx.beginPath(); ctx.ellipse(110,115,48,54,0,0,Math.PI*2); ctx.fillStyle='#f5c040'; ctx.fill();
+    // bag neck
+    ctx.fillStyle='#d4941a';
+    rr(95,62,30,26,6); ctx.fill();
+    // ribbon
+    ctx.fillStyle='#3db887';
+    ctx.beginPath(); ctx.ellipse(100,68,13,7,-0.4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(120,68,13,7,0.4,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(110,68,7,0,Math.PI*2); ctx.fillStyle='#2a9a70'; ctx.fill();
+    // dollar sign
+    ctx.font='bold 52px Arial'; ctx.fillStyle='#c8860a'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('﷼',110,120);
+    // coins
+    for(let i=0;i<3;i++){
+      ctx.beginPath(); ctx.ellipse(58,158-i*14,22,7,0,0,Math.PI*2); ctx.fillStyle='#c8860a'; ctx.fill();
+      ctx.fillRect(36,151-i*14,44,14); ctx.fillStyle='#c8860a'; ctx.fill();
+      ctx.beginPath(); ctx.ellipse(58,151-i*14,22,7,0,0,Math.PI*2); ctx.fillStyle='#f5c040'; ctx.fill();
+    }
+    const dataUrl = canvas.toDataURL('image/png');
+    document.getElementById('appIcon').href = dataUrl;
+    document.getElementById('appIconFav').href = dataUrl;
+  } catch(e){}
+})();
+
+render();
+</script>
+</body>
+</html>
