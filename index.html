@@ -143,6 +143,22 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dir
 .btn-save{background:var(--accent);color:#0d1117;}
 .btn-reset{background:var(--card2);color:var(--muted);border:1px solid var(--border);}
 
+/* DEDUCT BUTTONS */
+.deduct-row{display:flex;gap:8px;padding:7px 10px;border-top:1px solid rgba(248,81,73,.15);background:rgba(248,81,73,.04);}
+.deduct-row button{flex:1;padding:7px;border-radius:8px;border:1.5px solid;background:transparent;font-family:'Tajawal',sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;}
+.deduct-btn-main{color:var(--red);border-color:rgba(248,81,73,.4)!important;}
+.deduct-btn-sub{color:var(--yellow);border-color:rgba(227,179,65,.4)!important;}
+/* DEDUCT MODAL */
+.dmode-row{display:flex;gap:8px;margin-bottom:12px;}
+.dmode-btn{flex:1;padding:10px;border-radius:10px;border:2px solid var(--border);background:transparent;color:var(--muted);font-family:'Tajawal',sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;transition:all .15s;}
+.dmode-btn.on-main{background:var(--accent);color:#0d1117;border-color:var(--accent);}
+.dmode-btn.on-sub{background:var(--yellow);color:#0d1117;border-color:var(--yellow);}
+.dsel{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:.9rem;margin-bottom:10px;outline:none;direction:rtl;}
+.dsel:focus{border-color:var(--accent);}
+/* KEYBOARD FIX */
+body.kb-open .bottom{display:none;}
+body.kb-open{padding-bottom:0;}
+
 </style>
 </head>
 <body>
@@ -271,7 +287,24 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dir
     <div id="scTempOptions" style="display:none;">
       <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">عدد الشهور:</div>
       <input type="number" id="scMonths" placeholder="عدد الشهور" min="1" max="60" value="5" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.95rem;margin-bottom:10px;outline:none;"/>
-      <div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">المبلغ يُنقص من هذا البند تلقائياً كل شهر</div>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:8px;">الخصم من:</div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;">
+        <button id="scDeductMainBtn" onclick="setScDeductType('main')" style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--red);background:var(--red);color:#fff;font-family:Tajawal,sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;">🏷️ بند رئيسي</button>
+        <button id="scDeductSubBtn"  onclick="setScDeductType('sub')"  style="flex:1;padding:8px;border-radius:8px;border:2px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.78rem;font-weight:800;cursor:pointer;">🔖 فرع</button>
+      </div>
+      <!-- main cat selector -->
+      <div id="scDeductMainSec">
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:4px;">اختر البند الرئيسي:</div>
+        <select id="scDeductMainSel" class="dsel" style="margin-bottom:8px;" onchange="updateScDeductInfo()"></select>
+      </div>
+      <!-- sub selector -->
+      <div id="scDeductSubSec" style="display:none;">
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:4px;">البند الرئيسي:</div>
+        <select id="scDeductSubParent" class="dsel" style="margin-bottom:6px;" onchange="fillScDeductSubChildren()"></select>
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:4px;">الفرع:</div>
+        <select id="scDeductSubChild" class="dsel" style="margin-bottom:8px;" onchange="updateScDeductInfo()"></select>
+      </div>
+      <div id="scDeductInfo" style="font-size:.76rem;color:var(--muted);margin-bottom:8px;min-height:16px;"></div>
     </div>
     <div style="display:flex;gap:8px;">
       <button onclick="confirmSubCat()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إضافة ✓</button>
@@ -324,6 +357,216 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dir
 </div>
 
 
+
+<!-- DEDUCT MODAL -->
+<div class="modal-bg" id="deductBg" onclick="if(event.target===this)closeDeductModal()">
+  <div class="modal" style="max-height:90vh;overflow-y:auto;">
+    <h3>✂️ خصم من بند</h3>
+    <div id="dSourceInfo" style="font-size:.78rem;color:var(--yellow);margin-bottom:8px;min-height:18px;background:rgba(227,179,65,.08);border-radius:6px;padding:4px 8px;display:none;"></div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;">اختر نوع الخصم:</div>
+    <div class="dmode-row">
+      <button class="dmode-btn" id="dmodeMainBtn" onclick="setDMode('main')">🏷️ بند رئيسي</button>
+      <button class="dmode-btn" id="dmodeSubBtn"  onclick="setDMode('sub')">🔖 فرع</button>
+    </div>
+    <div id="dMainSec" style="display:none;">
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">البند الرئيسي:</div>
+      <select class="dsel" id="dMainSel" onchange="updateDInfo()"></select>
+    </div>
+    <div id="dSubSec" style="display:none;">
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">البند الرئيسي:</div>
+      <select class="dsel" id="dSubParent" onchange="fillDSubChildren()"></select>
+      <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">الفرع:</div>
+      <select class="dsel" id="dSubChild" onchange="updateDInfo()"></select>
+    </div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:6px;">المبلغ (ر.س):</div>
+    <input type="number" inputmode="decimal" id="dAmt" placeholder="0"
+      style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'Tajawal',sans-serif;font-size:.95rem;margin-bottom:10px;outline:none;"/>
+    <div id="dInfo" style="font-size:.78rem;color:var(--muted);margin-bottom:12px;min-height:18px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmDeduct()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--red);color:#fff;font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">✓ خصم</button>
+      <button onclick="closeDeductModal()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:'Tajawal',sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+// DEDUCT MODAL
+// ══════════════════════════════════════════════════
+let _dMode='main';
+let _dSourceCi=-1; // index of the jawwal cat that triggered deduct
+
+function openDeductModal(mode, sourceCi){
+  _dMode=mode||'main';
+  _dSourceCi=(sourceCi!==undefined)?sourceCi:-1;
+  document.getElementById('dAmt').value='';
+  document.getElementById('dInfo').textContent='';
+  // عرض اسم البند المؤقت المصدر
+  const srcInfoEl=document.getElementById('dSourceInfo');
+  if(_dSourceCi>=0&&cats[_dSourceCi]){
+    const srcName=cats[_dSourceCi].name;
+    srcInfoEl.textContent='⏳ خصم مرتبط بـ: '+srcName;
+    srcInfoEl.style.display='block';
+  } else {
+    srcInfoEl.style.display='none';
+  }
+  setDMode(_dMode);
+  document.getElementById('deductBg').classList.add('show');
+  setTimeout(()=>document.getElementById('dAmt').focus(),300);
+}
+function closeDeductModal(){document.getElementById('deductBg').classList.remove('show');}
+
+function setDMode(mode){
+  _dMode=mode;
+  const mb=document.getElementById('dmodeMainBtn');
+  const sb=document.getElementById('dmodeSubBtn');
+  mb.className='dmode-btn'+(mode==='main'?' on-main':'');
+  sb.className='dmode-btn'+(mode==='sub'?' on-sub':'');
+  document.getElementById('dMainSec').style.display=mode==='main'?'block':'none';
+  document.getElementById('dSubSec').style.display=mode==='sub'?'block':'none';
+  if(mode==='main') fillDMain();
+  else fillDSubParents();
+}
+
+function _getDeductableCats(){
+  // إذا جاء الطلب من بند مؤقت يخصم من بنود محددة → اعرض تلك البنود فقط
+  if(_dSourceCi>=0){
+    const src=cats[_dSourceCi];
+    if(src&&src.isJawwal&&src.jawwalType==='cats'&&src.jawwalMap&&src.jawwalMap.length>0){
+      return src.jawwalMap
+        .map(m=>cats.find(c=>c.id===m.catId))
+        .filter(c=>c&&!c.isJawwal&&!c.isExtra);
+    }
+  }
+  return cats.filter(c=>!c.isJawwal&&!c.isExtra);
+}
+
+function fillDMain(){
+  const sel=document.getElementById('dMainSel');
+  sel.innerHTML='';
+  _getDeductableCats().forEach(c=>{
+    const op=document.createElement('option');
+    op.value=c.id;
+    op.textContent=c.name.substring(0,28)+' ('+fmt(c.amt)+' ر.س)';
+    sel.appendChild(op);
+  });
+  if(sel.options.length===0){
+    const op=document.createElement('option');
+    op.value='';op.textContent='-- لا توجد بنود --';
+    sel.appendChild(op);
+  }
+  updateDInfo();
+}
+
+function fillDSubParents(){
+  const sel=document.getElementById('dSubParent');
+  sel.innerHTML='';
+  _getDeductableCats().filter(c=>c.subs&&c.subs.length>0).forEach(c=>{
+    const op=document.createElement('option');
+    op.value=c.id;op.textContent=c.name.substring(0,28);
+    sel.appendChild(op);
+  });
+  if(sel.options.length===0){
+    // fallback: show all cats with subs
+    cats.filter(c=>!c.isJawwal&&!c.isExtra&&c.subs&&c.subs.length>0).forEach(c=>{
+      const op=document.createElement('option');
+      op.value=c.id;op.textContent=c.name.substring(0,28);
+      sel.appendChild(op);
+    });
+  }
+  fillDSubChildren();
+}
+
+function fillDSubChildren(){
+  const pid=document.getElementById('dSubParent').value;
+  const parent=cats.find(c=>c.id===pid);
+  const sel=document.getElementById('dSubChild');
+  sel.innerHTML='';
+  if(parent&&parent.subs){
+    parent.subs.forEach((sub,i)=>{
+      const op=document.createElement('option');
+      op.value=i;
+      op.textContent=sub.name.substring(0,26)+' ('+fmt(sub.amt)+' ر.س)';
+      sel.appendChild(op);
+    });
+  }
+  updateDInfo();
+}
+
+function updateDInfo(){
+  const info=document.getElementById('dInfo');
+  if(_dMode==='main'){
+    const sel=document.getElementById('dMainSel');
+    const cat=cats.find(c=>c.id===sel.value);
+    info.textContent=cat?'الرصيد الحالي: '+fmt(cat.amt)+' ر.س':'';
+  } else {
+    const pid=document.getElementById('dSubParent').value;
+    const si=parseInt(document.getElementById('dSubChild').value);
+    const parent=cats.find(c=>c.id===pid);
+    const sub=parent&&parent.subs&&parent.subs[si];
+    info.textContent=sub?'الرصيد الحالي: '+fmt(sub.amt)+' ر.س':'';
+  }
+}
+
+function confirmDeduct(){
+  const amt=parseFloat(document.getElementById('dAmt').value)||0;
+  if(amt<=0){document.getElementById('dAmt').focus();return;}
+  // اسم المصدر (البند المؤقت إن وُجد)
+  const srcName=(_dSourceCi>=0&&cats[_dSourceCi])?cats[_dSourceCi].name:'خصم';
+
+  if(_dMode==='main'){
+    const sel=document.getElementById('dMainSel');
+    const cat=cats.find(c=>c.id===sel.value);
+    if(!cat){alert('اختر بنداً أولاً');return;}
+    // ── قاعدة ٣: منع التجاوز ──
+    if(amt>(parseFloat(cat.amt)||0)+0.01){
+      alert('⚠️ المبلغ ('+fmt(amt)+' ر.س) يتجاوز ميزانية بند "'+cat.name+'" ('+fmt(cat.amt)+' ر.س)');
+      return;
+    }
+    cat.amt=Math.max(0,(parseFloat(cat.amt)||0)-amt);
+    // ── قاعدة ٤: أضف كفرع مشطوب تلقائياً ──
+    if(!cat.subs) cat.subs=[];
+    cat.subs.push({id:'d'+Date.now(),name:srcName,amt,chk:true,subs:[],isDeducted:true});
+    cat.open=true;
+  } else {
+    const pid=document.getElementById('dSubParent').value;
+    const si=parseInt(document.getElementById('dSubChild').value);
+    const parent=cats.find(c=>c.id===pid);
+    if(!parent||!parent.subs||parent.subs[si]==null){alert('اختر فرعاً أولاً');return;}
+    const sub=parent.subs[si];
+    // ── قاعدة ٣: منع التجاوز ──
+    if(amt>(parseFloat(sub.amt)||0)+0.01){
+      alert('⚠️ المبلغ ('+fmt(amt)+' ر.س) يتجاوز ميزانية الفرع "'+sub.name+'" ('+fmt(sub.amt)+' ر.س)');
+      return;
+    }
+    sub.amt=Math.max(0,(parseFloat(sub.amt)||0)-amt);
+    // ── قاعدة ٤: أضف كفرع فرعي مشطوب ──
+    if(!sub.subs) sub.subs=[];
+    sub.subs.push({id:'d'+Date.now(),name:srcName,amt,chk:true,isDeducted:true});
+    sub.open=true;
+  }
+  closeDeductModal();
+  autoSave();render();
+}
+
+// ══════════════════════════════════════════════════
+// KEYBOARD FIX
+// ══════════════════════════════════════════════════
+let _initVH=window.innerHeight;
+window.addEventListener('resize',()=>{
+  const vh=window.innerHeight;
+  if(_initVH-vh>150){
+    document.body.classList.add('kb-open');
+    const focused=document.activeElement;
+    if(focused&&(focused.tagName==='INPUT'||focused.tagName==='SELECT'||focused.tagName==='TEXTAREA')){
+      setTimeout(()=>focused.scrollIntoView({behavior:'smooth',block:'center'}),100);
+    }
+  } else {
+    document.body.classList.remove('kb-open');
+    _initVH=vh;
+  }
+});
+</script>
 
 <script>
 // ══════════════════════════════════════════════════
@@ -411,21 +654,10 @@ const loadSal=()=>{const s=localStorage.getItem(skey());return s?parseFloat(s):1
 let cats=loadCats(), salary=loadSal();
 
 // ══════════════════════════════════════════════════
-// RECALC: subs sum → parent (skip jawwal)
+// RECALC: validate only — parents keep their own amounts
 // ══════════════════════════════════════════════════
 function recalc(){
-  cats.forEach(cat=>{
-    if(cat.isJawwal) return;
-    if(!cat.subs||!cat.subs.length) return;
-    cat.subs.forEach(sub=>{
-      if(sub.subs&&sub.subs.length){
-        sub.subs.forEach(ss=>{
-          if(ss.subs&&ss.subs.length) ss.amt=ss.subs.reduce((s,s3)=>s+s3.amt,0);
-        });
-        sub.amt=sub.subs.reduce((s,ss)=>s+ss.amt,0);
-      }
-    });
-  });
+  // لا نغير مبالغ الآباء — كل بند له مبلغه المستقل
 }
 
 // ══════════════════════════════════════════════════
@@ -509,51 +741,34 @@ function mkCat(cat,ci){
   nInp.onclick=e=>e.stopPropagation();
   nInp.onchange=e=>{cat.name=e.target.value;autoSave();};
   nWrap.appendChild(nInp);
-  // meta
-  if(hasSubs&&!cat.isJawwal){
-    const m=document.createElement('div');m.className='cmeta';
-    m.textContent=cat.subs.filter(s=>s.chk).length+'/'+cat.subs.length+' مكتمل';
-    nWrap.appendChild(m);
-  }
-  if(cat.isJawwal){
-    const m=document.createElement('div');m.className='cmeta';
-    m.style.color='var(--yellow)';
-    m.textContent='دُفع '+(cat.jawwalPaid||0)+' من '+cat.jawwalMonths+' أشهر';
-    nWrap.appendChild(m);
-  }
   hdr.appendChild(nWrap);
 
-  // amount
-  const aWrap=document.createElement('div');aWrap.className='camt-wrap';
+  // amount wrapper
+  const aWrap=document.createElement('div');
+  aWrap.className='camt-wrap';
+
   const aInp=document.createElement('input');
-  aInp.className='camt';aInp.type='number';
-  // إذا في فرعيات، اعرض مجموع غير المشيكة فقط
-  aInp.value=cat.amt;
+  aInp.className='camt';aInp.type='number';aInp.value=cat.amt||0;
   aInp.onclick=e=>e.stopPropagation();
-  if(hasSubs||cat.isJawwal){
-    aInp.readOnly=true;aInp.style.opacity='.6';
-  } else {
-    aInp.oninput=e=>{cat.amt=parseFloat(e.target.value)||0;autoSave();updateHdr();};
-  }
-  aWrap.appendChild(aInp);
+  aInp.oninput=e=>{cat.amt=parseFloat(e.target.value)||0;autoSave();updateHdr();};
   const aLbl=document.createElement('span');aLbl.className='camt-lbl';aLbl.textContent='ر.س';
-  aWrap.appendChild(aLbl);
-  // خانة ثانية: المتبقي بعد الفرعيات (بلون خفيف)
+  aWrap.appendChild(aInp);aWrap.appendChild(aLbl);
+
+  // grey box: parent.amt - sum(checked subs)
   if(hasSubs&&!cat.isJawwal){
-    const subsTotal=cat.subs.reduce((s,sub)=>s+(parseFloat(sub.amt)||0),0);
-    const remaining=cat.amt-subsTotal;
-    if(subsTotal>0){
-      const remWrap=document.createElement('div');
-      remWrap.style.cssText='display:flex;align-items:center;gap:2px;flex-shrink:0;';
-      const remVal=document.createElement('span');
-      remVal.style.cssText='font-size:.75rem;font-weight:700;color:'+(remaining>=0?'var(--muted)':'var(--red)')+';white-space:nowrap;';
-      remVal.textContent=(remaining>=0?'↓':'⚠️')+Math.abs(Math.round(remaining));
-      const remLbl=document.createElement('span');
-      remLbl.style.cssText='font-size:.65rem;color:var(--muted);';
-      remLbl.textContent='ر.س';
-      remWrap.appendChild(remVal);remWrap.appendChild(remLbl);
-      aWrap.appendChild(remWrap);
-    }
+    const checkedAmt=cat.subs.reduce((s,sub)=>sub.chk?s+(parseFloat(sub.amt)||0):s,0);
+    const remaining=(parseFloat(cat.amt)||0)-checkedAmt;
+    const remWrap=document.createElement('div');
+    remWrap.style.cssText='display:flex;align-items:center;gap:2px;flex-shrink:0;margin-right:4px;';
+    const remVal=document.createElement('span');
+    const isOver=remaining<0;
+    remVal.style.cssText='font-size:.75rem;font-weight:700;color:'+(remaining<=0?(isOver?'var(--red)':'var(--green)'):checkedAmt>0?'var(--yellow)':'var(--muted)')+';white-space:nowrap;';
+    remVal.textContent=(remaining<=0?(remaining===0?'✓':('!'+Math.abs(Math.round(remaining)))):('↓'+Math.round(remaining)));
+    const remLbl=document.createElement('span');
+    remLbl.style.cssText='font-size:.65rem;color:var(--muted);';
+    remLbl.textContent=remaining===0?'':' ر.س';
+    remWrap.appendChild(remVal);remWrap.appendChild(remLbl);
+    aWrap.appendChild(remWrap);
   }
   hdr.appendChild(aWrap);
 
@@ -605,10 +820,80 @@ function mkCat(cat,ci){
     btnWrap.appendChild(editBtn);btnWrap.appendChild(jBtn);
     bar.appendChild(dots);bar.appendChild(btnWrap);
     div.appendChild(bar);
+    // إذا ينقص من الراتب — أظهر خيار اختيار بند رئيسي
+    if(cat.jawwalType==='salary'){
+      const selWrap=document.createElement('div');
+      selWrap.style.cssText='padding:6px 10px 8px;border-top:1px solid rgba(227,179,65,.15);display:flex;align-items:center;gap:8px;flex-wrap:wrap;';
+      
+      const selLbl=document.createElement('span');
+      selLbl.style.cssText='font-size:.72rem;color:var(--yellow);white-space:nowrap;';
+      selLbl.textContent='ينقص من:';
+      selWrap.appendChild(selLbl);
+
+      const sel=document.createElement('select');
+      sel.style.cssText='flex:1;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:4px 8px;color:var(--text);font-family:Tajawal,sans-serif;font-size:.78rem;min-width:100px;';
+      // خيار فارغ
+      const emptyOpt=document.createElement('option');
+      emptyOpt.value='';emptyOpt.textContent='-- اختر بند --';
+      sel.appendChild(emptyOpt);
+      // البنود الرئيسية
+      cats.filter(ct=>!ct.isJawwal&&ct.id!==cat.id).forEach(ct=>{
+        const op=document.createElement('option');
+        op.value=ct.id;op.textContent=ct.name.substring(0,20);
+        if(cat.jawwalTargetCat===ct.id) op.selected=true;
+        sel.appendChild(op);
+      });
+      sel.onchange=e=>{
+        const targetId=e.target.value;
+        if(!targetId) return;
+        const target=cats.find(x=>x.id===targetId);
+        if(!target) return;
+        // إزالة من البند القديم إن وجد
+        if(cat.jawwalTargetCat){
+          const oldTarget=cats.find(x=>x.id===cat.jawwalTargetCat);
+          if(oldTarget){
+            oldTarget.amt=(parseFloat(oldTarget.amt)||0)+(parseFloat(cat.amt)||0);
+            oldTarget.subs=(oldTarget.subs||[]).filter(s=>s.id!==cat.id+'_sub');
+          }
+        }
+        // خصم من البند الجديد
+        target.amt=Math.max(0,(parseFloat(target.amt)||0)-(parseFloat(cat.amt)||0));
+        // إضافة كفرعي تحت البند
+        if(!target.subs) target.subs=[];
+        target.subs=target.subs.filter(s=>s.id!==cat.id+'_sub');
+        target.subs.push({id:cat.id+'_sub',name:cat.name+' (مؤقت)',amt:cat.amt,chk:false,subs:[]});
+        target.open=true;
+        cat.jawwalTargetCat=targetId;
+        autoSave();render();
+      };
+      selWrap.appendChild(sel);
+
+      if(cat.jawwalTargetCat){
+        const info=document.createElement('span');
+        info.style.cssText='font-size:.7rem;color:var(--green);';
+        const tgt=cats.find(x=>x.id===cat.jawwalTargetCat);
+        info.textContent=tgt?'✓ '+tgt.name.substring(0,15):'';
+        selWrap.appendChild(info);
+      }
+      div.appendChild(selWrap);
+    }
+    // ── زرا الخصم تحت المؤقت ──
+    const dRow=document.createElement('div');dRow.className='deduct-row';
+    const dMain=document.createElement('button');
+    dMain.className='deduct-btn-main';
+    dMain.textContent='✂️ خصم من بند رئيسي';
+    dMain.onclick=e=>{e.stopPropagation();openDeductModal('main',ci);};
+    const dSub=document.createElement('button');
+    dSub.className='deduct-btn-sub';
+    dSub.textContent='✂️ خصم من فرع';
+    dSub.onclick=e=>{e.stopPropagation();openDeductModal('sub',ci);};
+    dRow.appendChild(dMain);dRow.appendChild(dSub);
+    div.appendChild(dRow);
   }
 
   // ── subs list ──
-  if(hasSubs){
+  const showSubs = hasSubs || (cat.isJawwal && cat.subs && cat.subs.length > 0);
+  if(showSubs){
     const sl=document.createElement('div');sl.className='sublist';
     cat.subs.forEach((sub,si)=>{
       // sub row
@@ -643,24 +928,19 @@ function mkCat(cat,ci){
       const saInp=document.createElement('input');
       saInp.className='samt';saInp.type='number';saInp.value=sub.amt;
       saInp.onclick=e=>e.stopPropagation();
-      if(sub.subs&&sub.subs.length){
-        saInp.readOnly=true;saInp.style.opacity='.6';
-      } else {
-        saInp.oninput=e=>{sub.amt=parseFloat(e.target.value)||0;autoSave();updateHdr();};
-      }
+      saInp.oninput=e=>{sub.amt=parseFloat(e.target.value)||0;autoSave();updateHdr();render();};
       saWrap.appendChild(saInp);
       const saLbl=document.createElement('span');saLbl.className='camt-lbl';saLbl.textContent='ر.س';
       saWrap.appendChild(saLbl);
-      // خانة هامشية للفرعي إذا فيه فرعي فرعي
+      // grey box for sub: sub.amt - sum(checked subsubs)
       if(sub.subs&&sub.subs.length){
         const subChecked=sub.subs.reduce((s,ss)=>ss.chk?s+(parseFloat(ss.amt)||0):s,0);
-        const subRem=sub.amt-subChecked;
-        if(sub.subs.some(ss=>ss.amt>0)){
-          const remSp=document.createElement('span');
-          remSp.style.cssText='font-size:.68rem;font-weight:700;color:'+(subRem<=0?'var(--green)':'var(--muted)')+';white-space:nowrap;margin-right:2px;';
-          remSp.textContent=(subRem<=0?'✓':('↓'+Math.round(subRem)));
-          saWrap.appendChild(remSp);
-        }
+        const subRem=(parseFloat(sub.amt)||0)-subChecked;
+        const isOver=subRem<0;
+        const remSp=document.createElement('span');
+        remSp.style.cssText='font-size:.68rem;font-weight:700;color:'+(subRem<=0?(isOver?'var(--red)':'var(--green)'):subChecked>0?'var(--yellow)':'var(--muted)')+';white-space:nowrap;margin-right:2px;';
+        remSp.textContent=(subRem<=0?(subRem===0?'✓':('!'+Math.abs(Math.round(subRem)))):('↓'+Math.round(subRem)));
+        saWrap.appendChild(remSp);
       }
       sDiv.appendChild(saWrap);
 
@@ -734,20 +1014,40 @@ function mkCat(cat,ci){
 // TOGGLE ACTIONS
 // ══════════════════════════════════════════════════
 function toggleCat(ci){
-  const c=cats[ci];
-  if(c.subs&&c.subs.length){
-    const v=!c.subs.every(s=>s.chk);
-    c.subs.forEach(s=>{s.chk=v;if(s.subs)s.subs.forEach(ss=>ss.chk=v);});
-    c.chk=v;
-  } else { c.chk=!c.chk; }
+  const cat=cats[ci];
+  cat.chk=!cat.chk;
+  // إذا بند مؤقت وانشطب → اطرح من البنود المرتبطة
+  if(cat.isJawwal&&cat.chk&&cat.jawwalType==='cats'&&cat.jawwalMap){
+    cat.jawwalMap.forEach(m=>{
+      const t=cats.find(x=>x.id===m.catId);
+      if(t){
+        // شيك الفرعي المرتبط
+        const relSub=t.subs&&t.subs.find(s=>s.id&&s.id.includes(cat.id));
+        if(relSub) relSub.chk=true;
+        autoCheckParent(cats.indexOf(t));
+      }
+    });
+  }
   autoSave();render();
 }
 
 function autoCheckParent(ci){
   const cat=cats[ci];
   if(!cat.subs||!cat.subs.length) return;
+  // مجموع الفرعيات المشيكة
   const checkedAmt=cat.subs.reduce((s,sub)=>sub.chk?s+(parseFloat(sub.amt)||0):s,0);
-  cat.chk=(cat.amt-checkedAmt)<=0;
+  // يُشطب الرئيسي فقط لو الفرعيات استنفذت المبلغ كاملاً
+  if(checkedAmt>=cat.amt) cat.chk=true;
+  else cat.chk=false;
+}
+
+function autoCheckSub(ci,si){
+  const sub=cats[ci].subs[si];
+  if(!sub.subs||!sub.subs.length) return;
+  const checkedAmt=sub.subs.reduce((s,ss)=>ss.chk?s+(parseFloat(ss.amt)||0):s,0);
+  if(checkedAmt>=sub.amt) sub.chk=true;
+  else sub.chk=false;
+  autoCheckParent(ci);
 }
 
 function autoCheckSub(ci,si){
@@ -802,11 +1102,12 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape')modalClose();
 });
 
-let _scType='normal', _scCi=-1;
+let _scType='normal', _scCi=-1, _scDeductMode='main';
 
 function addSub(ci){
   _scCi=ci;
   _scType='normal';
+  _scDeductMode='main';
   document.getElementById('scName').value='';
   document.getElementById('scAmt').value='';
   document.getElementById('scMonths').value='5';
@@ -830,9 +1131,21 @@ function setScType(t){
   } else if(t==='temp'){
     tb.style.background='var(--yellow)';tb.style.color='#0d1117';tb.style.borderColor='var(--yellow)';
     document.getElementById('scTempOptions').style.display='block';
+    setScDeductType(_scDeductMode||'main');
   } else {
     eb.style.background='var(--green)';eb.style.color='#0d1117';eb.style.borderColor='var(--green)';
   }
+}
+
+// ── حساب مجموع الفروع الموجودة تحت بند رئيسي ──
+function sumSubs(cat){
+  if(!cat.subs||!cat.subs.length) return 0;
+  return cat.subs.reduce((s,sb)=>s+(parseFloat(sb.amt)||0),0);
+}
+// ── حساب مجموع الفروع الفرعية تحت فرع ──
+function sumSubSubs(sub){
+  if(!sub.subs||!sub.subs.length) return 0;
+  return sub.subs.reduce((s,ss)=>s+(parseFloat(ss.amt)||0),0);
 }
 
 function confirmSubCat(){
@@ -840,18 +1153,138 @@ function confirmSubCat(){
   const amt=parseFloat(document.getElementById('scAmt').value)||0;
   if(!name){document.getElementById('scName').focus();return;}
   const ci=_scCi;
-  if(!cats[ci].subs) cats[ci].subs=[];
+  const parentCat=cats[ci];
+  if(!parentCat.subs) parentCat.subs=[];
+
+  // ── قاعدة ٢: لا تسمح بإضافة فرع يتجاوز ميزانية الأب ──
+  if(!parentCat.isJawwal){
+    const used=sumSubs(parentCat);
+    const remaining=Math.max(0,(parseFloat(parentCat.amt)||0)-used);
+    if(amt>remaining+0.01){
+      alert('⚠️ المبلغ ('+fmt(amt)+' ر.س) يتجاوز المتبقي من ميزانية البند الأب ('+fmt(remaining)+' ر.س)');
+      return;
+    }
+  }
+
   if(_scType==='extra'){
-    cats[ci].subs.push({id:'s'+Date.now(),name,amt,chk:false,subs:[],isExtra:true});
+    parentCat.subs.push({id:'s'+Date.now(),name,amt,chk:false,subs:[],isExtra:true});
   } else if(_scType==='temp'){
     const months=parseInt(document.getElementById('scMonths').value)||1;
-    cats[ci].subs.push({id:'s'+Date.now(),name,amt,chk:false,subs:[],isTemp:true,tempMonths:months,tempPaid:0});
+    const newId='s'+Date.now();
+    if(_scDeductMode==='main'){
+      const targetId=document.getElementById('scDeductMainSel').value;
+      const target=cats.find(c=>c.id===targetId);
+      // ── قاعدة ٣: لا تسمح بخصم أكثر من ميزانية البند المستهدف ──
+      if(target&&amt>0){
+        if(amt>(parseFloat(target.amt)||0)+0.01){
+          alert('⚠️ المبلغ ('+fmt(amt)+' ر.س) يتجاوز ميزانية بند "'+target.name+'" ('+fmt(target.amt)+' ر.س)');
+          return;
+        }
+        target.amt=Math.max(0,(parseFloat(target.amt)||0)-amt);
+        if(!target.subs) target.subs=[];
+        // ── قاعدة ٤: أضف كفرع مشطوب تلقائياً ──
+        target.subs.push({id:newId+'_d',name:name,amt,chk:true,subs:[],isDeducted:true});
+        target.open=true;
+      }
+      parentCat.subs.push({id:newId,name,amt,chk:false,subs:[],isTemp:true,tempMonths:months,tempPaid:0,deductTargetCat:targetId,deductMode:'main'});
+    } else {
+      const pid=document.getElementById('scDeductSubParent').value;
+      const si=parseInt(document.getElementById('scDeductSubChild').value);
+      const parentOfSub=cats.find(c=>c.id===pid);
+      const targetSub=parentOfSub&&parentOfSub.subs&&parentOfSub.subs[si];
+      // ── قاعدة ٣: لا تتجاوز ميزانية الفرع ──
+      if(targetSub&&amt>0){
+        if(amt>(parseFloat(targetSub.amt)||0)+0.01){
+          alert('⚠️ المبلغ ('+fmt(amt)+' ر.س) يتجاوز ميزانية الفرع "'+targetSub.name+'" ('+fmt(targetSub.amt)+' ر.س)');
+          return;
+        }
+        targetSub.amt=Math.max(0,(parseFloat(targetSub.amt)||0)-amt);
+        if(!targetSub.subs) targetSub.subs=[];
+        // ── قاعدة ٤: أضف كفرع فرعي مشطوب ──
+        targetSub.subs.push({id:newId+'_d',name:name,amt,chk:true,isDeducted:true});
+        parentOfSub.open=true; targetSub.open=true;
+      }
+      parentCat.subs.push({id:newId,name,amt,chk:false,subs:[],isTemp:true,tempMonths:months,tempPaid:0,deductTargetCat:pid,deductTargetSub:si,deductMode:'sub'});
+    }
   } else {
-    cats[ci].subs.push({id:'s'+Date.now(),name,amt,chk:false,subs:[]});
+    parentCat.subs.push({id:'s'+Date.now(),name,amt,chk:false,subs:[]});
   }
-  cats[ci].open=true;
+  parentCat.open=true;
   closeSubModal();
   recalc();autoSave();render();
+}
+
+function setScDeductType(mode){
+  _scDeductMode=mode;
+  const mb=document.getElementById('scDeductMainBtn');
+  const sb=document.getElementById('scDeductSubBtn');
+  if(mode==='main'){
+    mb.style.background='var(--red)';mb.style.color='#fff';mb.style.borderColor='var(--red)';
+    sb.style.background='transparent';sb.style.color='var(--muted)';sb.style.borderColor='var(--border)';
+    document.getElementById('scDeductMainSec').style.display='block';
+    document.getElementById('scDeductSubSec').style.display='none';
+    fillScDeductMain();
+  } else {
+    sb.style.background='var(--yellow)';sb.style.color='#0d1117';sb.style.borderColor='var(--yellow)';
+    mb.style.background='transparent';mb.style.color='var(--muted)';mb.style.borderColor='var(--border)';
+    document.getElementById('scDeductMainSec').style.display='none';
+    document.getElementById('scDeductSubSec').style.display='block';
+    fillScDeductSubParents();
+  }
+}
+
+function fillScDeductMain(){
+  const sel=document.getElementById('scDeductMainSel');
+  sel.innerHTML='';
+  cats.filter(c=>!c.isJawwal&&!c.isExtra).forEach(c=>{
+    const op=document.createElement('option');
+    op.value=c.id;
+    op.textContent=c.name.substring(0,26)+' ('+fmt(c.amt)+' ر.س)';
+    sel.appendChild(op);
+  });
+  updateScDeductInfo();
+}
+
+function fillScDeductSubParents(){
+  const sel=document.getElementById('scDeductSubParent');
+  sel.innerHTML='';
+  cats.filter(c=>!c.isJawwal&&!c.isExtra&&c.subs&&c.subs.length>0).forEach(c=>{
+    const op=document.createElement('option');
+    op.value=c.id;op.textContent=c.name.substring(0,26);
+    sel.appendChild(op);
+  });
+  fillScDeductSubChildren();
+}
+
+function fillScDeductSubChildren(){
+  const pid=document.getElementById('scDeductSubParent').value;
+  const parent=cats.find(c=>c.id===pid);
+  const sel=document.getElementById('scDeductSubChild');
+  sel.innerHTML='';
+  if(parent&&parent.subs){
+    parent.subs.forEach((sub,i)=>{
+      const op=document.createElement('option');
+      op.value=i;
+      op.textContent=sub.name.substring(0,24)+' ('+fmt(sub.amt)+' ر.س)';
+      sel.appendChild(op);
+    });
+  }
+  updateScDeductInfo();
+}
+
+function updateScDeductInfo(){
+  const info=document.getElementById('scDeductInfo');
+  if(_scDeductMode==='main'){
+    const sel=document.getElementById('scDeductMainSel');
+    const cat=cats.find(c=>c.id===sel.value);
+    info.textContent=cat?'الرصيد الحالي: '+fmt(cat.amt)+' ر.س':'';
+  } else {
+    const pid=document.getElementById('scDeductSubParent').value;
+    const si=parseInt(document.getElementById('scDeductSubChild').value);
+    const parent=cats.find(c=>c.id===pid);
+    const sub=parent&&parent.subs&&parent.subs[si];
+    info.textContent=sub?'الرصيد الحالي: '+fmt(sub.amt)+' ر.س':'';
+  }
 }
 
 function delSub(ci,si){
@@ -861,8 +1294,28 @@ function delSub(ci,si){
 
 function addSSub(ci,si){
   showModal('إضافة فرعي',(name,amt)=>{
-    cats[ci].subs[si].subs=cats[ci].subs[si].subs||[];
-    cats[ci].subs[si].subs.push({id:'ss'+Date.now(),name,amt,chk:false});
+    const parentCat=cats[ci];
+    const parentSub=parentCat.subs[si];
+    parentSub.subs=parentSub.subs||[];
+
+    // ── قاعدة ٢: لا تتجاوز ميزانية الفرع الأب ──
+    const usedInSub=sumSubSubs(parentSub);
+    const remainInSub=Math.max(0,(parseFloat(parentSub.amt)||0)-usedInSub);
+    if(amt>remainInSub+0.01){
+      alert('⚠️ المبلغ ('+fmt(amt)+' ر.س) يتجاوز المتبقي من ميزانية الفرع "'+parentSub.name+'" ('+fmt(remainInSub)+' ر.س)');
+      return;
+    }
+
+    // ── قاعدة ١: فرع الفرع ينقص من الفرع ثم الرئيسي ثم الراتب ──
+    // ١. نقص من الفرع
+    parentSub.amt=Math.max(0,(parseFloat(parentSub.amt)||0)-amt);
+    // ٢. نقص من البند الرئيسي
+    parentCat.amt=Math.max(0,(parseFloat(parentCat.amt)||0)-amt);
+    // ٣. نقص من الراتب
+    salary=Math.max(0,(salary||0)-amt);
+    localStorage.setItem(skey(),salary);
+
+    parentSub.subs.push({id:'ss'+Date.now(),name,amt,chk:false});
     recalc();autoSave();render();
   });
 }
@@ -996,48 +1449,56 @@ function confirmMainCat(){
   const name=document.getElementById('mcName').value.trim();
   const amt=parseFloat(document.getElementById('mcAmt').value)||0;
   if(!name){document.getElementById('mcName').focus();return;}
-  
+
+  if(_addingToExtra){
+    _addingToExtra=false;
+    extraCats.push({id:'e'+Date.now(),name,amt,chk:false,open:false,subs:[]});
+    closeMainModal();saveExtra();renderExtraCats();return;
+  }
+
   if(_mcType==='extra'){
-    // دخل آخر — خارج حسابات الميزانية تماماً
     cats.push({id:'c'+Date.now(),name,amt,chk:false,open:false,subs:[],isExtra:true});
-  } else if(_mcType==='normal'){
-    cats.push({id:'c'+Date.now(),name,amt,chk:false,open:false,subs:[]});
-  } else {
+  } else if(_mcType==='temp'){
     const months=parseInt(document.getElementById('mcMonths').value)||1;
+    const newId='c'+Date.now();
     if(_mcDeductType==='salary'){
-      // ينقص من الراتب مباشرة
-      cats.push({
-        id:'c'+Date.now(),name,amt,chk:false,open:false,
+      cats.push({id:newId,name,amt,chk:false,open:false,
         isJawwal:true,jawwalMonths:months,jawwalPaid:0,
-        jawwalType:'salary',jawwalMap:[],subs:[]
-      });
+        jawwalType:'salary',jawwalMap:[],subs:[]});
     } else {
-      // ينقص من بنود محددة — خصم فعلي فوري
       const jwMap=_deductRows.filter(r=>r.catId&&r.amt>0);
-      // خصم فعلي من كل بند
+      // خصم فعلي + إضافة كفرعي تحت كل بند
       jwMap.forEach(m=>{
         const t=cats.find(x=>x.id===m.catId);
-        if(t) t.amt=Math.max(0,(parseFloat(t.amt)||0)-m.amt);
+        if(t){
+          t.amt=Math.max(0,(parseFloat(t.amt)||0)-m.amt);
+          if(!t.subs) t.subs=[];
+          // أضف كفرعي تحت البند
+          t.subs.push({
+            id:newId+'_'+m.catId,
+            name:name+' (مؤقت)',
+            amt:m.amt,chk:false,subs:[]
+          });
+          t.open=true;
+        }
       });
       cats.push({
-        id:'c'+Date.now(),name,amt:0,chk:false,open:false,
+        id:newId,name,amt:0,chk:false,open:false,
         isJawwal:true,jawwalMonths:months,jawwalPaid:0,
         jawwalType:'cats',jawwalMap:jwMap,
         subs:jwMap.map((r,i)=>({
-          id:'jx'+Date.now()+i,
-          name:(parseFloat(r.amt)||0)+' من '+(cats.find(ct=>ct.id===r.catId)||{name:r.catId}).name,
+          id:newId+'jx'+i,
+          name:(r.amt)+' من '+(cats.find(ct=>ct.id===r.catId)||{name:r.catId}).name,
           amt:r.amt,chk:false,subs:[]
         }))
       });
     }
+  } else {
+    cats.push({id:'c'+Date.now(),name,amt,chk:false,open:false,subs:[]});
   }
   closeMainModal();
   autoSave();render();
 }
-let _editJwCi=-1, _ejType='salary', _ejRows=[];
-let _delCi=-1;
-
-function showDeleteConfirm(ci){_delCi=ci;document.getElementById('delConfirmBg').classList.add('show');}
 function closeDelConfirm(){document.getElementById('delConfirmBg').classList.remove('show');}
 function confirmDelete(){cats.splice(_delCi,1);closeDelConfirm();autoSave();render();}
 
@@ -1276,15 +1737,6 @@ function importData(e){
   reader.readAsText(file);
   e.target.value='';
 }
-
-// Fix keyboard covering inputs on mobile
-document.addEventListener('focusin', e=>{
-  if(e.target.tagName==='INPUT'){
-    setTimeout(()=>{
-      e.target.scrollIntoView({behavior:'smooth', block:'center'});
-    }, 300);
-  }
-});
 
 // Generate app icon via canvas
 (function(){
