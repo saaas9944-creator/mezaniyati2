@@ -113,6 +113,8 @@ body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);dir
 .jwdots{display:flex;gap:5px;}
 .jwdot{min-width:44px;height:22px;border-radius:11px;border:2px solid var(--border);font-size:.6rem;font-weight:800;display:flex;align-items:center;justify-content:center;color:var(--muted);padding:0 4px;white-space:nowrap;opacity:.7;}
 .jwdot.paid{background:var(--yellow);color:#0d1117;border-color:var(--yellow);opacity:1;}
+.jwdot.clickable{cursor:pointer;}
+.jwdot.clickable:hover{border-color:var(--yellow);color:var(--yellow);opacity:1;}
 .jwbtn{background:var(--yellow);color:#0d1117;border:none;border-radius:7px;padding:4px 10px;font-family:'Tajawal',sans-serif;font-size:.75rem;font-weight:800;cursor:pointer;}
 .jwbtn:disabled{opacity:.4;cursor:not-allowed;}
 
@@ -628,6 +630,7 @@ function updateDInfo(){
 function confirmDeduct(){
   const amt=parseFloat(document.getElementById('dAmt').value)||0;
   if(amt<=0){document.getElementById('dAmt').focus();return;}
+  pushUndo();
   if(_dMode==='main'){
     const sel=document.getElementById('dMainSel');
     const cat=cats.find(c=>c.id===sel.value);
@@ -885,16 +888,20 @@ const fmt=n=>Math.round(n).toLocaleString('ar-SA');
 const UNDO_STACK=[];
 const UNDO_LIMIT=10;
 function pushUndo(){
-  UNDO_STACK.push({cats:JSON.stringify(cats),salary:salary});
+  UNDO_STACK.push({cats:JSON.stringify(cats),salary:salary,month:CM,year:CY});
   if(UNDO_STACK.length>UNDO_LIMIT) UNDO_STACK.shift();
   updateUndoBtn();
 }
-function undo(){
+async function undo(){
   if(!UNDO_STACK.length) return;
   const prev=UNDO_STACK.pop();
+  const monthChanged=(prev.month!==CM||prev.year!==CY);
+  CM=prev.month;
+  CY=prev.year;
   cats=JSON.parse(prev.cats);
   salary=prev.salary;
-  autoSave();render();
+  await autoSave();
+  render();
   updateUndoBtn();
 }
 function updateUndoBtn(){
@@ -1115,12 +1122,15 @@ function mkCat(cat,ci){
     // صف الشهور بالاسم
     const dots=document.createElement('div');dots.className='jwdots';
     const startMonth=cat.startMonth!==undefined?cat.startMonth:CM;
+    const allDone=(cat.jawwalPaid||0)>=cat.jawwalMonths;
     for(let i=0;i<cat.jawwalMonths;i++){
       const mIdx=(startMonth+i)%12;
       const d=document.createElement('div');
-      d.className='jwdot'+(i<(cat.jawwalPaid||0)?' paid':'');
+      const isPaid=i<(cat.jawwalPaid||0);
+      d.className='jwdot clickable'+(isPaid?' paid':'');
       d.textContent=MNS[mIdx];
       d.title='شهر '+(i+1)+' من '+cat.jawwalMonths;
+      d.onclick=e=>{e.stopPropagation();toggleJawwalPaid(ci,i);};
       dots.appendChild(d);
     }
     const btnWrap=document.createElement('div');btnWrap.style.cssText='display:flex;gap:6px;align-items:center;flex-wrap:wrap;';
@@ -1128,31 +1138,22 @@ function mkCat(cat,ci){
     editBtn.style.cssText='background:var(--card2);color:var(--muted);border:1px solid var(--border);border-radius:7px;padding:4px 8px;font-family:Tajawal,sans-serif;font-size:.72rem;cursor:pointer;';
     editBtn.textContent='✏️';
     editBtn.onclick=e=>{e.stopPropagation();editJawwal(ci);};
-    const allDone=(cat.jawwalPaid||0)>=cat.jawwalMonths;
-    const nextMonthIdx=(startMonth+(cat.jawwalPaid||0))%12;
-    const jBtn=document.createElement('button');jBtn.className='jwbtn';
-    if(allDone){
-      jBtn.textContent='✅ مكتمل';
-      jBtn.style.background='var(--green)';
-      jBtn.style.color='#0d1117';
-      jBtn.style.border='1px solid var(--green)';
-    } else {
-      jBtn.textContent='✓ دفعت '+MNS[nextMonthIdx];
-    }
-    jBtn.disabled=allDone;
-    jBtn.onclick=e=>{e.stopPropagation();payJawwal(ci);};
-    // زر إضافة بند فرعي
     const addSubJwBtn=document.createElement('button');
     addSubJwBtn.style.cssText='background:rgba(88,166,255,.1);color:var(--accent);border:1px dashed var(--accent);border-radius:7px;padding:4px 10px;font-family:Tajawal,sans-serif;font-size:.72rem;cursor:pointer;';
     addSubJwBtn.textContent='+ فرع';
     addSubJwBtn.onclick=e=>{e.stopPropagation();addSubToJawwal(ci);};
-    // زر تأجيل القسط
-    const postponeBtn=document.createElement('button');
-    postponeBtn.style.cssText='background:rgba(227,179,65,.15);color:var(--yellow);border:1px solid rgba(227,179,65,.4);border-radius:7px;padding:4px 8px;font-family:Tajawal,sans-serif;font-size:.72rem;cursor:pointer;';
-    postponeBtn.textContent='⏸️';
-    postponeBtn.title='تأجيل هذا الشهر';
-    postponeBtn.onclick=e=>{e.stopPropagation();postponeJawwal(ci);};
-    btnWrap.appendChild(editBtn);btnWrap.appendChild(postponeBtn);btnWrap.appendChild(jBtn);btnWrap.appendChild(addSubJwBtn);
+    if(allDone){
+      const doneLabel=document.createElement('span');
+      doneLabel.style.cssText='color:var(--green);font-size:.72rem;font-family:Tajawal,sans-serif;font-weight:800;';
+      doneLabel.textContent='✅ مكتمل';
+      btnWrap.appendChild(editBtn);btnWrap.appendChild(doneLabel);
+    } else {
+      const postponeInfoBtn=document.createElement('button');
+      postponeInfoBtn.style.cssText='background:rgba(227,179,65,.15);color:var(--yellow);border:1px solid rgba(227,179,65,.4);border-radius:7px;padding:4px 10px;font-family:Tajawal,sans-serif;font-size:.72rem;cursor:pointer;';
+      postponeInfoBtn.textContent='⏸️ تأجيل القسط';
+      postponeInfoBtn.onclick=e=>{e.stopPropagation();alert('لتأجيل القسط اتبع الآتي بالترتيب:\n\nأولاً: اضغط ✏️ ثم زد عدد الشهور الكلية بفارق شهر واضغط حفظ\n\nثانياً: احذف 🗑️ الشهر المراد تأجيل قسطه وأكد الحذف ثم اختر (هذا الشهر فقط)');};
+      btnWrap.appendChild(editBtn);btnWrap.appendChild(postponeInfoBtn);btnWrap.appendChild(addSubJwBtn);
+    }
     bar.appendChild(dots);bar.appendChild(btnWrap);
     div.appendChild(bar);
     // ── قسم البنود المخصوم منها (cats type) ──
@@ -1426,7 +1427,7 @@ function mkCat(cat,ci){
           spBtn.disabled=true;
         } else {
           spBtn.style.cssText='background:rgba(227,179,65,.15);color:var(--yellow);border:1px solid var(--yellow);border-radius:6px;padding:2px 7px;font-family:Tajawal,sans-serif;font-size:.65rem;cursor:pointer;flex-shrink:0;white-space:nowrap;';
-          spBtn.textContent='✓ '+spNextMName+' ('+spPaid+'/'+(sub.tempMonths||1)+')';
+          spBtn.textContent='✓ '+MNS[CM]+' ('+spPaid+'/'+(sub.tempMonths||1)+')';
           spBtn.onclick=e=>{e.stopPropagation();paySubMonth(ci,si);};
         }
         sRow.appendChild(spBtn);
@@ -1816,7 +1817,7 @@ function confirmSubCat(){
   const ci=_scCi;
   const parentCat=cats[ci];
   if(!parentCat.subs) parentCat.subs=[];
-
+  pushUndo();
   if(_scType==='extra'){
     parentCat.subs.push({id:'s'+Date.now(),name,amt,chk:false,subs:[],isExtra:true});
 
@@ -1868,11 +1869,20 @@ function confirmSubCat(){
     }
   }
   recalc();autoSave();render();
+  const _snapAdd=JSON.parse(JSON.stringify(cats));
+  askApplyMonths(async(toAll)=>{
+    if(toAll) await propagateToFuture(_snapAdd);
+  });
 }
 
 function delSub(ci,si){
+  pushUndo();
   cats[ci].subs.splice(si,1);
   recalc();autoSave();render();
+  const _snapDel=JSON.parse(JSON.stringify(cats));
+  askApplyMonths(async(toAll)=>{
+    if(toAll) await propagateToFuture(_snapDel);
+  });
 }
 
 function addSSub(ci,si){
@@ -1884,6 +1894,7 @@ function addSSub(ci,si){
 }
 
 function delSSub(ci,si,ssi){
+  pushUndo();
   cats[ci].subs[si].subs.splice(ssi,1);
   recalc();autoSave();render();
 }
@@ -1925,6 +1936,7 @@ function confirmSSubTemp(){
   const months=parseInt(document.getElementById('sstMonths').value)||1;
   if(!name){document.getElementById('sstName').focus();return;}
   if(amt<=0){document.getElementById('sstAmt').focus();return;}
+  pushUndo();
   const parentSub=cats[_sstCi].subs[_sstSi];
   const parentCat=cats[_sstCi];
   parentSub.amt=Math.max(0,(parseFloat(parentSub.amt)||0)-amt);
@@ -1946,6 +1958,7 @@ function payJawwal(ci){
   const startM=c.startMonth!==undefined?c.startMonth:CM;
   const mIdx=(startM+paid)%12;
   if(!confirm('تأكيد: دفعت قسط شهر '+MNS[mIdx]+'؟'))return;
+  pushUndo();
   c.jawwalPaid=paid+1;
   // check فروع منتهية الشهور
   if(c.subs){
@@ -2022,7 +2035,7 @@ function paySubMonth(ci,si){
 // ══════════════════════════════════════════════════
 // OTHER
 // ══════════════════════════════════════════════════
-function salChanged(){salary=parseFloat(document.getElementById('salInp').value)||0;autoSave();updateHdr();}
+function salChanged(){pushUndo();salary=parseFloat(document.getElementById('salInp').value)||0;autoSave();updateHdr();}
 
 let _mcType='normal', _mcDeductType='salary';
 let _deductRows=[];
@@ -2212,6 +2225,7 @@ function confirmMainCat(){
     closeMainModal();saveExtra();renderExtraCats();return;
   }
 
+  pushUndo();
   if(_mcType==='extra'){
     cats.push({id:'c'+Date.now(),name,amt,chk:false,open:false,subs:[],isExtra:true});
   } else if(_mcType==='temp'){
@@ -2268,7 +2282,6 @@ function confirmMainCat(){
   } else {
     cats.push({id:'c'+Date.now(),name,amt,chk:false,open:false,subs:[]});
   }
-  pushUndo();
   closeMainModal();
   const _snapCats=JSON.parse(JSON.stringify(cats));
   askApplyMonths(async(toAll)=>{
@@ -2313,13 +2326,13 @@ function confirmDelete(){
       render();
     });
   } else if(cat&&cat.isJawwal){
-    // احذف المؤقت من كل الشهور في Firebase
-    autoSave();
-    if(window._fbGet&&window.fbSaveCats){
-      const jwId=cat.id;
-      (async()=>{
+    // اسأل: هذا الشهر فقط أم كل الشهور؟
+    const jwId=cat.id;
+    askApplyMonths(async(toAll)=>{
+      await autoSave();
+      if(toAll&&window._fbGet&&window.fbSaveCats){
         for(let m=0;m<12;m++){
-          if(m===CM) continue; // الشهر الحالي محفوظ بـ autoSave
+          if(m===CM) continue;
           try{
             const data=await window._fbGet(`bgt3_${CY}_${m}`);
             if(!Array.isArray(data)) continue;
@@ -2335,9 +2348,9 @@ function confirmDelete(){
             if(changed) await window.fbSaveCats(newData,CY,m);
           }catch(e){}
         }
-      })();
-    }
-    render();
+      }
+      render();
+    });
   } else {
     autoSave();render();
   }
@@ -2526,6 +2539,7 @@ function confirmEditJw(){
   const name=document.getElementById('ejName').value.trim();
   const m=parseInt(document.getElementById('ejMonths').value)||1;
   const amt=parseFloat(document.getElementById('ejAmt').value)||0;
+  pushUndo();
   if(name) cat.name=name;
   cat.jawwalMonths=Math.max(cat.jawwalPaid||0, m);
   cat.jawwalAmt=amt;
@@ -2759,6 +2773,7 @@ function confirmEditMain(){
   const cat=cats[_emCi];
   const name=document.getElementById('emName').value.trim();
   const amt=parseFloat(document.getElementById('emAmt').value)||0;
+  pushUndo();
   if(name) cat.name=name;
   if(_emType==='extra'){
     cat.isExtra=true; cat.isJawwal=false; cat.amt=amt;
@@ -2807,7 +2822,6 @@ function confirmEditMain(){
   } else {
     cat.isExtra=false; cat.isJawwal=false; cat.amt=amt;
   }
-  pushUndo();
   closeEditMain();
   const _snapCats2=JSON.parse(JSON.stringify(cats));
   askApplyMonths(async(toAll)=>{
@@ -3000,6 +3014,44 @@ function postponeJawwal(ci){
   alert('قريباً ⏸️');
 }
 
+function toggleJawwalPaid(ci,idx){
+  const c=cats[ci];
+  const currentPaid=c.jawwalPaid||0;
+  const newPaid=idx<currentPaid ? idx : idx+1;
+  if(newPaid===currentPaid) return;
+  pushUndo();
+  c.jawwalPaid=newPaid;
+  if(c.jawwalPaid>=c.jawwalMonths){
+    c.chk=true;
+    getMirrors(c.id).forEach(s=>s.chk=true);
+    if(c.jawwalType==='cats'){
+      cats.forEach(ct=>{if(ct.subs)ct.subs=ct.subs.filter(s=>!(s.isMirror&&s.jawwalId===c.id));});
+    }
+    setTimeout(()=>alert('🎉 اكتملت أقساط "'+c.name+'" ✅'),100);
+  } else {
+    c.chk=false;
+    getMirrors(c.id).forEach(s=>s.chk=false);
+  }
+  autoSave();render();
+  propagateJawwalPaid(c.id, c.jawwalPaid);
+}
+
+async function propagateJawwalPaid(jawwalId, newPaid){
+  if(!window.fbSaveCats||!window._fbGet) return;
+  for(let m=0;m<12;m++){
+    if(m===CM) continue;
+    try{
+      const data=await window._fbGet(`bgt3_${CY}_${m}`);
+      if(!Array.isArray(data)) continue;
+      const idx=data.findIndex(c=>c.id===jawwalId);
+      if(idx<0) continue;
+      data[idx].jawwalPaid=newPaid;
+      data[idx].chk=(data[idx].jawwalPaid||0)>=(data[idx].jawwalMonths||0);
+      await window.fbSaveCats(data,CY,m);
+    }catch(e){}
+  }
+}
+
 
 
 function exportData(){
@@ -3080,10 +3132,9 @@ render();
 let _pendingAction=null;
 
 function askApplyMonths(action){
-  setTimeout(()=>{
-    const toAll=confirm('تطبيق على كل الشهور القادمة؟\n\nحسناً = كل الشهور\nإلغاء = هذا الشهر فقط');
-    action(toAll);
-  },100);
+  // فقط للبنود العادية
+  _pendingAction=action;
+  document.getElementById('applyMonthsBg').classList.add('show');
 }
 
 async function applyMonthsChoice(choice){
