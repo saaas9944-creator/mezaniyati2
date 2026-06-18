@@ -198,6 +198,12 @@ body.kb-open{padding-bottom:0;}
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
+  // مفتاح الحفظ: نفس الصيغة القديمة تماماً إذا لم يوجد رمز حساب محفوظ — لا يغيّر شيئاً على الحسابات الحالية
+  window.fbKey = (cy,cm) => {
+    const accId = localStorage.getItem('budgetAccountId');
+    return accId ? `bgt3_${accId}_${cy}_${cm}` : `bgt3_${cy}_${cm}`;
+  };
+
   async function fbSet(key,data){
     try{await setDoc(doc(db,"budget",key),{data:JSON.stringify(data)});}catch(e){console.error(e);}
   }
@@ -208,14 +214,15 @@ body.kb-open{padding-bottom:0;}
 
   // البنود كاملة في bgt3 (بدون chk وبدون mirrors)
   window.fbSaveCats = (cats,cy,cm) => {
-    const key = cy!==undefined ? `bgt3_${cy}_${cm}` : 'cats';
+    const key = cy!==undefined ? window.fbKey(cy,cm) : 'cats';
     return fbSet(key, cats.map(c=>({...c,chk:false,subs:c.subs?c.subs.filter(s=>!s.isMirror).map(s=>({...s,chk:false,subs:s.subs?s.subs.map(ss=>({...ss,chk:false})):[]})):[]})));
   };
   window.fbLoadCats = (cy,cm) => {
-    const key = cy!==undefined ? `bgt3_${cy}_${cm}` : 'cats';
+    const key = cy!==undefined ? window.fbKey(cy,cm) : 'cats';
     return fbGet(key);
   };
   window._fbGet = fbGet;
+  window._fbSet = fbSet;
 
   // البنود المؤقتة
   window.fbSaveJawwal = cats => fbSet('jawwal', cats.filter(c=>c.isJawwal).map(c=>({...c,chk:false,subs:c.subs?c.subs.filter(s=>!s.isMirror):[]})));
@@ -246,6 +253,35 @@ body.kb-open{padding-bottom:0;}
 <body>
 <div id="monthPulse" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:8888;pointer-events:none;opacity:0;">
   <img id="monthPulseIcon" src="" style="width:220px;height:220px;border-radius:40px;box-shadow:0 0 60px rgba(88,166,255,0.4);" />
+</div>
+
+<div id="loginGateScreen" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:10000;overflow-y:auto;padding:24px 20px;box-sizing:border-box;">
+  <div style="max-width:340px;margin:30px auto 0;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:24px;">
+      <img src="data:image/webp;base64,UklGRtYGAABXRUJQVlA4WAoAAAAQAAAAXwAAXwAAQUxQSH0BAAABkEPbtqk99/Nv27Zt27Z6dP472" style="width:56px;height:56px;border-radius:14px;"/>
+      <h1 style="font-family:Tajawal,sans-serif;font-size:1.25rem;font-weight:900;color:var(--accent);margin:0;">ميزانيتي</h1>
+      <p style="font-family:Tajawal,sans-serif;font-size:.78rem;color:var(--muted);margin:0;text-align:center;line-height:1.6;">أدخل رقم جوالك وكلمة السر — أول مرة تُنشئ حسابك تلقائياً، والمرات اللي بعدها تدخل لنفس بياناتك من أي جهاز.</p>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;">
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-family:Tajawal,sans-serif;font-size:.75rem;color:var(--muted);margin-bottom:6px;">رقم الجوال</label>
+        <input id="loginPhone" type="tel" placeholder="05xxxxxxxx" style="width:100%;box-sizing:border-box;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:13px 14px;font-family:Tajawal,sans-serif;font-size:.95rem;color:var(--text);direction:ltr;text-align:right;outline:none;"/>
+      </div>
+      <div style="margin-bottom:14px;">
+        <label style="display:block;font-family:Tajawal,sans-serif;font-size:.75rem;color:var(--muted);margin-bottom:6px;">كلمة السر</label>
+        <input id="loginPass" type="password" placeholder="••••••••" style="width:100%;box-sizing:border-box;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:13px 14px;font-family:Tajawal,sans-serif;font-size:.95rem;color:var(--text);outline:none;"/>
+      </div>
+      <button onclick="doLogin()" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.95rem;font-weight:900;cursor:pointer;">دخول</button>
+      <div style="font-family:Tajawal,sans-serif;font-size:.72rem;color:var(--yellow);text-align:center;margin-top:14px;">🔒 بياناتك مرتبطة برقمك وكلمة سرك فقط</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin:18px 0;">
+      <span style="flex:1;height:1px;background:var(--border);"></span>
+      <p style="font-family:Tajawal,sans-serif;font-size:.7rem;color:var(--muted);margin:0;">أو</p>
+      <span style="flex:1;height:1px;background:var(--border);"></span>
+    </div>
+    <button onclick="legacyDeviceConfirm()" style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.8rem;cursor:pointer;">🔑 هذا جهازي الأصلي</button>
+    <p style="font-family:Tajawal,sans-serif;font-size:.72rem;color:var(--muted);text-align:center;margin-top:14px;line-height:1.7;">الزر الأخير لصاحب الحساب الأصلي فقط — يربط هذا الجهاز ببياناته القديمة بدون رقم أو كلمة سر.</p>
+  </div>
 </div>
 
 <div id="loadingScreen" style="position:fixed;inset:0;background:#0d1117;display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column;gap:16px;">
@@ -327,6 +363,9 @@ body.kb-open{padding-bottom:0;}
   <button class="exp-btn" onclick="document.getElementById('importFile').click()">📥 استيراد البيانات</button>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)"/>
 </div>
+<div class="export-bar">
+  <button class="exp-btn" onclick="openAccountModal()">👤 الحساب</button>
+</div>
 <div class="bottom">
   <button class="btn btn-reset" onclick="resetMonth()">🔄 تصفير</button>
   <button class="btn" id="undoBtn" onclick="undo()" style="background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.4);color:#a78bfa;opacity:.35;" title="تراجع عن آخر تعديل">↩️ تراجع</button>
@@ -357,6 +396,64 @@ body.kb-open{padding-bottom:0;}
     <div style="display:flex;flex-direction:column;gap:8px;">
       <button onclick="applyMonthsChoice('current')" style="padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">هذا الشهر فقط</button>
       <button onclick="applyMonthsChoice('all')" style="padding:12px;border-radius:8px;border:none;background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">الشهور المحددة</button>
+    </div>
+  </div>
+</div>
+
+<!-- LEGACY DEVICE CONFIRM MODAL -->
+<div class="modal-bg" id="legacyConfirmBg" style="z-index:10001;" onclick="if(event.target===this)closeLegacyConfirm()">
+  <div class="modal">
+    <h3 style="color:var(--yellow);">🔑 تأكيد الجهاز الأصلي</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin:10px 0 16px;text-align:center;line-height:1.6;">هذا الخيار مخصص لصاحب الحساب الأصلي فقط، ويربط هذا الجهاز ببياناته القديمة مباشرة. متأكد إنك صاحب الحساب؟</p>
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmLegacyDevice()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--yellow);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">نعم، متأكد ✓</button>
+      <button onclick="closeLegacyConfirm()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- LINK PHONE CONFIRM MODAL -->
+<div class="modal-bg" id="linkPhoneConfirmBg" style="z-index:201;" onclick="if(event.target===this)closeLinkPhoneConfirm()">
+  <div class="modal">
+    <h3 style="color:var(--accent);">🔗 تأكيد الربط</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin:10px 0 16px;text-align:center;line-height:1.6;">أي شخص يكتب نفس الرقم وكلمة السر هذي بأي جهاز، سيدخل لهذا الحساب بالضبط. متأكد إنك تبي الربط؟</p>
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmLinkPhone()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">ربط ✓</button>
+      <button onclick="closeLinkPhoneConfirm()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- ACCOUNT MODAL -->
+<div class="modal-bg" id="accountBg" onclick="if(event.target===this)closeAccountModal()">
+  <div class="modal">
+    <h3 style="color:var(--accent);text-align:center;">👤 الحساب</h3>
+    <p style="font-size:.8rem;color:var(--muted);margin:10px 0 6px;text-align:center;">رمز حسابك الحالي:</p>
+    <div id="accIdDisplay" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:.75rem;color:var(--text);text-align:center;word-break:break-all;margin-bottom:8px;direction:ltr;">—</div>
+    <button onclick="copyAccountId()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.82rem;cursor:pointer;margin-bottom:14px;">📋 نسخ الرمز</button>
+    <p style="font-size:.78rem;color:var(--muted);margin:0 0 8px;text-align:center;line-height:1.5;">لمشاركة بياناتك مع جهاز آخر، انسخ الرمز ولصقه هناك. لإنشاء حساب جديد مستقل تماماً (بدون أي بند حالي)، اضغط الزر بالأسفل.</p>
+    <button onclick="newAccountConfirm()" style="width:100%;padding:10px;border-radius:8px;border:none;background:var(--yellow);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;margin-bottom:8px;">🆕 بدء حساب مستقل جديد</button>
+    <input type="text" id="accIdInput" placeholder="ألصق رمز حساب هنا..." style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.8rem;margin-bottom:8px;direction:ltr;text-align:center;"/>
+    <button onclick="useAccountId()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;margin-bottom:8px;">استخدام هذا الرمز</button>
+    <button onclick="backToDefaultAccount()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.8rem;cursor:pointer;margin-bottom:8px;">↩️ الرجوع لحسابي الأصلي (بدون رمز)</button>
+    <div style="border-top:1px solid var(--border);margin:14px 0;padding-top:14px;">
+      <p style="font-size:.78rem;color:var(--muted);margin:0 0 10px;text-align:center;line-height:1.5;">🔗 اربط رقم جوال وكلمة سر بهذا الحساب، عشان تقدر تدخل له من جهاز ثاني (آيباد، لابتوب...) بشاشة الدخول العادية.</p>
+      <input type="tel" id="linkPhoneInput" placeholder="رقم الجوال" style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.85rem;margin-bottom:8px;direction:ltr;text-align:right;"/>
+      <input type="password" id="linkPassInput" placeholder="كلمة السر" style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.85rem;margin-bottom:8px;"/>
+      <button onclick="linkPhoneConfirm()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;">🔗 ربط بهذا الحساب</button>
+    </div>
+    <button onclick="closeAccountModal()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.85rem;cursor:pointer;">إغلاق</button>
+  </div>
+</div>
+
+<!-- NEW ACCOUNT CONFIRM MODAL -->
+<div class="modal-bg" id="newAccountConfirmBg" onclick="if(event.target===this)closeNewAccountConfirm()">
+  <div class="modal">
+    <h3 style="color:var(--yellow);">🆕 حساب مستقل جديد</h3>
+    <p style="font-size:.9rem;color:var(--muted);margin:10px 0 16px;text-align:center;line-height:1.6;">سيبدأ هذا الجهاز بحساب جديد فاضي تماماً، ولن يظهر فيه أي بند من بياناتك الحالية. متأكد؟</p>
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmNewAccount()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--yellow);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">تأكيد ✓</button>
+      <button onclick="closeNewAccountConfirm()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
     </div>
   </div>
 </div>
@@ -714,56 +811,20 @@ window.addEventListener('resize',()=>{
 // DEFAULT CATEGORIES
 // ══════════════════════════════════════════════════
 const DEFAULTS=[
-  {id:'unplanned',name:'مصاريف غير محسوبة 💳',amt:540,chk:false,open:false,subs:[
-    {id:'u1',name:'إيكيا',amt:241.25,chk:false,subs:[]}
+  {id:'installments',name:'أقساط 💳',amt:2530,chk:false,open:false,subs:[
+    {id:'ins1',name:'قسط السيارة',amt:1200,chk:false,subs:[]},
+    {id:'ins2',name:'قرض شخصي',amt:900,chk:false,subs:[]},
+    {id:'ins3',name:'تابي',amt:250,chk:false,subs:[]},
+    {id:'ins4',name:'تمارا',amt:180,chk:false,subs:[]}
   ]},
-  {id:'ishraf',name:'الإشراف 🏠',amt:1500,chk:false,open:false,subs:[
-    {id:'i1',name:'استثمار دراهم',amt:700,chk:false,subs:[]},
-    {id:'i2',name:'ادخار',amt:800,chk:false,subs:[]}
-  ]},
-  {id:'wknds',name:'ويكيندات (تساهيل) 🛍️',amt:479,chk:false,open:false,subs:[]},
-  {id:'food',name:'مطاعم 🍔',amt:1861,chk:false,open:false,subs:[]},
-  {id:'groc',name:'سوبرماركت 🛒',amt:2070,chk:false,open:false,subs:[
-    {id:'g1',name:'سوبرماركت يومي',amt:620,chk:false,subs:[]},
-    {id:'g2',name:'سوبرماركت أسبوعي',amt:1450,chk:false,subs:[]},
-    {id:'g3',name:'أمازون',amt:21,chk:false,subs:[]},
-    {id:'g4',name:'54-',amt:54,chk:false,subs:[]}
-  ]},
-  {id:'subs',name:'اشتراكات 📱',amt:998.55,chk:false,open:false,subs:[
-    {id:'sb1',name:'موبايلي',amt:248,chk:false,subs:[]},
-    {id:'sb2',name:'كهرباء',amt:377,chk:false,subs:[]},
-    {id:'sb3',name:'قسط الثلث (تساهيل)',amt:170,chk:false,subs:[]},
-    {id:'sb4',name:'مايكروسوفت لـ 6 أشهر 🖥️',amt:46,chk:false,subs:[]},
-    {id:'sb5',name:'المجازي',amt:36.55,chk:false,subs:[]},
-    {id:'sb6',name:'فاتورة جوال',amt:121,chk:false,subs:[]}
-  ]},
-  {id:'loan',name:'القرض 💳',amt:481,chk:false,open:false,subs:[
-    {id:'l1',name:'الأقساط',amt:481,chk:false,subs:[
-      {id:'l1a',name:'هدية نادية',amt:84,chk:false},
-      {id:'l1b',name:'58 حامدة',amt:58,chk:false},
-      {id:'l1c',name:'23 ليوم الأخير',amt:23,chk:false}
-    ]}
-  ]},
-  {id:'hamida',name:'1000 حامدة ❤️❤️❤️❤️',amt:1000,chk:false,open:false,subs:[]},
-  {id:'travel',name:'سياحة ✈️',amt:700,chk:false,open:false,subs:[]},
-  {id:'miriam',name:'صدقة مريم — ادخار للشهر 5 🌸',amt:500,chk:false,open:false,subs:[]},
-  {id:'sadaqa',name:'صدقتي 200 — للادخار الشهر 5',amt:200,chk:false,open:false,subs:[]},
-  {id:'shabab',name:'صدقة الشباب',amt:0,chk:false,open:false,subs:[]},
-  {id:'petrol',name:'بنزين ⛽',amt:200,chk:false,open:false,subs:[]},
-  {id:'dirah',name:'500 الديرة 🏙️',amt:500,chk:false,open:false,subs:[]},
-  {id:'ahli',name:'450 الأهلي 🏦',amt:450,chk:false,open:false,subs:[
-    {id:'a1',name:'50 زيت سيارة',amt:50,chk:false,subs:[]},
-    {id:'a2',name:'200 احتياطي سنوي',amt:200,chk:false,subs:[]},
-    {id:'a3',name:'200 صيانة سيارة',amt:200,chk:false,subs:[]}
-  ]},
-  {id:'lastweek',name:'300 آخر أسبوع 🗓️',amt:300,chk:false,open:false,subs:[]},
-  {id:'myex',name:'200 مصروفي',amt:200,chk:false,open:false,subs:[]},
-  {id:'qamrjana',name:'500 قمرجنة 👧👧👧👧👧',amt:500,chk:false,open:false,subs:[]},
-  {id:'health',name:'200 صحة 🩺🩺🩺🩺🩺',amt:200,chk:false,open:false,subs:[]},
-  {id:'shagala',name:'280 شغالة',amt:280,chk:false,open:false,subs:[]},
-  {id:'gift',name:'500 هدية 🎁',amt:500,chk:false,open:false,subs:[
-    {id:'gf1',name:'101 عالي للادخار',amt:101,chk:false,subs:[]},
-    {id:'gf2',name:'50 عالي اروماتيك تمارا',amt:50,chk:false,subs:[]}
+  {id:'petrol',name:'بنزين ⛽',amt:800,chk:false,open:false,subs:[]},
+  {id:'sadaqa',name:'صدقة 🤲',amt:300,chk:false,open:false,subs:[]},
+  {id:'groc',name:'سوبرماركت 🛒',amt:2000,chk:false,open:false,subs:[]},
+  {id:'subs',name:'اشتراكات 📱',amt:1050,chk:false,open:false,subs:[
+    {id:'sb1',name:'كهرباء',amt:400,chk:false,subs:[]},
+    {id:'sb2',name:'ماء',amt:50,chk:false,subs:[]},
+    {id:'sb3',name:'إنترنت',amt:400,chk:false,subs:[]},
+    {id:'sb4',name:'فاتورة جوال',amt:200,chk:false,subs:[]}
   ]}
 ];
 
@@ -772,11 +833,11 @@ const DEFAULTS=[
 // ══════════════════════════════════════════════════
 const MNS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 let CM=new Date().getMonth(), CY=new Date().getFullYear();
-const mkey=()=>`bgt3_${CY}_${CM}`;
+const mkey=()=>window.fbKey(CY,CM);
 const skey=()=>`sal3_${CY}_${CM}`;
 const dc=x=>JSON.parse(JSON.stringify(x));
 const loadCats=()=>dc(DEFAULTS);
-const loadSal=()=>16367;
+const loadSal=()=>10000;
 localStorage.removeItem('_loaded');
 let cats=loadCats(), salary=loadSal();
 let balHidden=localStorage.getItem('balHidden')==='1';
@@ -816,7 +877,57 @@ async function loadFromCloud(){
   render();
 }
 
-if(window._firebaseReady){
+async function deriveAccountId(phone,pass){
+  const data=phone.trim()+':'+pass;
+  if(window.crypto&&crypto.subtle&&crypto.subtle.digest){
+    try{
+      const buf=new TextEncoder().encode(data);
+      const hashBuf=await crypto.subtle.digest('SHA-256',buf);
+      return [...new Uint8Array(hashBuf)].map(b=>b.toString(16).padStart(2,'0')).join('').slice(0,16);
+    }catch(e){}
+  }
+  // احتياطي: يعمل في أي بيئة (مثل فتح الملف بصيغة content://) بدون الحاجة لـ Web Crypto API
+  let h1=0,h2=0;
+  for(let i=0;i<data.length;i++){
+    const c=data.charCodeAt(i);
+    h1=(h1*31+c)>>>0;
+    h2=(h2*131+c)>>>0;
+  }
+  return h1.toString(16).padStart(8,'0')+h2.toString(16).padStart(8,'0');
+}
+async function doLogin(){
+  const phone=document.getElementById('loginPhone').value.trim();
+  const pass=document.getElementById('loginPass').value;
+  if(!phone||!pass){alert('أدخل رقم الجوال وكلمة السر');return;}
+  const derivedId=await deriveAccountId(phone,pass);
+  let finalId=derivedId;
+  if(window._fbGet){
+    try{
+      const alias=await window._fbGet('alias_'+derivedId);
+      if(alias!==null&&alias!==undefined) finalId=alias;
+    }catch(e){}
+  }
+  localStorage.setItem('budgetAccountId',finalId);
+  document.getElementById('loginGateScreen').style.display='none';
+  document.getElementById('loadingScreen').style.display='flex';
+  if(window._firebaseReady){loadFromCloud();}else{window.addEventListener('firebaseReady',loadFromCloud);}
+}
+function legacyDeviceConfirm(){document.getElementById('legacyConfirmBg').classList.add('show');}
+function closeLegacyConfirm(){document.getElementById('legacyConfirmBg').classList.remove('show');}
+function confirmLegacyDevice(){
+  document.getElementById('legacyConfirmBg').classList.remove('show');
+  localStorage.setItem('budgetAccountId','');
+  document.getElementById('loginGateScreen').style.display='none';
+  document.getElementById('loadingScreen').style.display='flex';
+  if(window._firebaseReady){loadFromCloud();}else{window.addEventListener('firebaseReady',loadFromCloud);}
+}
+function needsLogin(){
+  return localStorage.getItem('budgetAccountId')===null;
+}
+if(needsLogin()){
+  document.getElementById('loadingScreen').style.display='none';
+  document.getElementById('loginGateScreen').style.display='block';
+} else if(window._firebaseReady){
   loadFromCloud();
 } else {
   window.addEventListener('firebaseReady', loadFromCloud);
@@ -2444,7 +2555,7 @@ function confirmDelete(){
         for(let m=0;m<12;m++){
           if(m===CM) continue;
           try{
-            const data=await window._fbGet(`bgt3_${CY}_${m}`);
+            const data=await window._fbGet(window.fbKey(CY,m));
             if(!Array.isArray(data)) continue;
             let changed=false;
             const newData=data.filter(c=>{if(c.id===jwId){changed=true;return false;}return true;});
@@ -2465,7 +2576,7 @@ function confirmDelete(){
         for(let m=0;m<12;m++){
           if(m===CM) continue;
           try{
-            const data=await window._fbGet(`bgt3_${CY}_${m}`);
+            const data=await window._fbGet(window.fbKey(CY,m));
             if(!Array.isArray(data)) continue;
             const idx=data.findIndex(c=>c.id===jwId);
             if(idx<0) continue;
@@ -2716,7 +2827,7 @@ async function confirmEditJw(){
       for(let m=0;m<12;m++){
         if(m===CM) continue;
         try{
-          const data=await window._fbGet(`bgt3_${CY}_${m}`);
+          const data=await window._fbGet(window.fbKey(CY,m));
           if(!Array.isArray(data)) continue;
           const idx=data.findIndex(c=>c.id===jwId);
           if(idx<0) continue;
@@ -3032,7 +3143,7 @@ async function injectActiveJawwal(){
       let m=CM-d; let y=CY;
       if(m<0){m+=12;y--;}
       try{
-        const data=await window._fbGet(`bgt3_${y}_${m}`);
+        const data=await window._fbGet(window.fbKey(y,m));
         if(!data||!Array.isArray(data)) continue;
         data.filter(c=>c.isJawwal).forEach(jw=>{
           jw._sourceY=y; jw._sourceM=m;
@@ -3168,6 +3279,67 @@ function goToResult(idx){
   },200);
 }
 
+function openAccountModal(){
+  const accId=localStorage.getItem('budgetAccountId');
+  document.getElementById('accIdDisplay').textContent=accId||'(الحساب الافتراضي — بدون رمز)';
+  document.getElementById('accIdInput').value='';
+  document.getElementById('accountBg').classList.add('show');
+}
+function closeAccountModal(){document.getElementById('accountBg').classList.remove('show');}
+function copyAccountId(){
+  const accId=localStorage.getItem('budgetAccountId')||'';
+  if(!accId){alert('لا يوجد رمز حالياً — هذا هو الحساب الافتراضي');return;}
+  navigator.clipboard.writeText(accId).then(()=>alert('تم نسخ الرمز ✓')).catch(()=>alert(accId));
+}
+function newAccountConfirm(){
+  document.getElementById('accountBg').classList.remove('show');
+  document.getElementById('newAccountConfirmBg').classList.add('show');
+}
+function closeNewAccountConfirm(){document.getElementById('newAccountConfirmBg').classList.remove('show');}
+async function confirmNewAccount(){
+  document.getElementById('newAccountConfirmBg').classList.remove('show');
+  const newId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():(Date.now()+'-'+Math.random().toString(36).slice(2));
+  localStorage.setItem('budgetAccountId',newId);
+  // اعرض قائمة المثال — نفس ما يشوفه أي شخص جديد يسجّل دخول لأول مرة (لا يوجد بيانات سحابية لهذا الرمز بعد)
+  cats=dc(DEFAULTS);salary=loadSal();
+  render();updateHdr();
+  await loadFromCloud();
+  render();updateHdr();
+  alert('هذا تماماً ما يشوفه صديقك أول ما يسجّل دخول ✓');
+}
+function useAccountId(){
+  const val=document.getElementById('accIdInput').value.trim();
+  if(!val){alert('ألصق رمزاً أولاً');return;}
+  localStorage.setItem('budgetAccountId',val);
+  location.reload();
+}
+function backToDefaultAccount(){
+  localStorage.setItem('budgetAccountId','');
+  location.reload();
+}
+function linkPhoneConfirm(){
+  const phone=document.getElementById('linkPhoneInput').value.trim();
+  const pass=document.getElementById('linkPassInput').value;
+  if(!phone||!pass){alert('أدخل رقم الجوال وكلمة السر أولاً');return;}
+  document.getElementById('linkPhoneConfirmBg').classList.add('show');
+}
+function closeLinkPhoneConfirm(){document.getElementById('linkPhoneConfirmBg').classList.remove('show');}
+async function confirmLinkPhone(){
+  document.getElementById('linkPhoneConfirmBg').classList.remove('show');
+  const phone=document.getElementById('linkPhoneInput').value.trim();
+  const pass=document.getElementById('linkPassInput').value;
+  const derivedId=await deriveAccountId(phone,pass);
+  const currentId=localStorage.getItem('budgetAccountId')||'';
+  if(window._fbSet){
+    await window._fbSet('alias_'+derivedId,currentId);
+    alert('تم الربط ✓ — تقدر تدخل لهذا الحساب من أي جهاز بنفس الرقم وكلمة السر');
+  } else {
+    alert('تعذّر الربط — تأكد من اتصالك بالإنترنت وحاول مرة أخرى');
+  }
+  document.getElementById('linkPhoneInput').value='';
+  document.getElementById('linkPassInput').value='';
+}
+
 let _postponeCi=-1;
 function postponeJawwal(ci){
   const cat=cats[ci];
@@ -3228,7 +3400,7 @@ async function confirmPostponeJawwal(){
     for(let m=0;m<12;m++){
       if(m===CM) continue;
       try{
-        const data=await window._fbGet(`bgt3_${CY}_${m}`);
+        const data=await window._fbGet(window.fbKey(CY,m));
         if(!Array.isArray(data)) continue;
         const idx=data.findIndex(c=>c.id===jwId);
         if(idx<0) continue;
@@ -3273,7 +3445,7 @@ async function propagateJawwalPaid(jawwalId, paidArr, newPaid, allDone){
   for(let m=0;m<12;m++){
     if(m===CM) continue;
     try{
-      const data=await window._fbGet(`bgt3_${CY}_${m}`);
+      const data=await window._fbGet(window.fbKey(CY,m));
       if(!Array.isArray(data)) continue;
       const idx=data.findIndex(c=>c.id===jawwalId);
       if(idx<0) continue;
@@ -3382,7 +3554,7 @@ async function propagateToFuture(stableCats){
   const absNow=CY*12+CM;
   for(let m=CM+1;m<12;m++){
     try{
-      let futData=await window._fbGet(`bgt3_${CY}_${m}`);
+      let futData=await window._fbGet(window.fbKey(CY,m));
       if(!Array.isArray(futData)) futData=[];
       // حدّث البنود الثابتة فقط
       stableCats.filter(c=>!c.isJawwal).forEach(src=>{
