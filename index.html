@@ -183,6 +183,10 @@ body.kb-open{padding-bottom:0;}
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.2/Sortable.min.js"></script>
 <script type="module">
+  window._memLS={};
+  window.lsGet=k=>{try{return localStorage.getItem(k);}catch(e){return (k in window._memLS)?window._memLS[k]:null;}};
+  window.lsSet=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){window._memLS[k]=v;}};
+  window.lsRemove=k=>{try{localStorage.removeItem(k);}catch(e){delete window._memLS[k];}};
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
   import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-firestore.js";
 
@@ -200,7 +204,7 @@ body.kb-open{padding-bottom:0;}
 
   // مفتاح الحفظ: نفس الصيغة القديمة تماماً إذا لم يوجد رمز حساب محفوظ — لا يغيّر شيئاً على الحسابات الحالية
   window.fbKey = (cy,cm) => {
-    const accId = localStorage.getItem('budgetAccountId');
+    const accId = window.lsGet('budgetAccountId');
     return accId ? `bgt3_${accId}_${cy}_${cm}` : `bgt3_${cy}_${cm}`;
   };
 
@@ -243,8 +247,17 @@ body.kb-open{padding-bottom:0;}
   window.fbLoadChecks = (cy,cm) => fbGet(`checks_${cy}_${cm}`);
 
   // الراتب
-  window.fbSaveSalary = (sal,cy,cm) => fbSet(`salary_${cy}_${cm}`,sal);
-  window.fbLoadSalary = (cy,cm) => fbGet(`salary_${cy}_${cm}`);
+  window.fbSaveSalary = (sal,cy,cm) => fbSet('sal_'+window.fbKey(cy,cm),sal);
+  window.fbLoadSalary = async (cy,cm) => {
+    const v = await fbGet('sal_'+window.fbKey(cy,cm));
+    if(v!==null && v!==undefined) return v;
+    // توافق رجعي: فقط إذا كان المستخدم على الحساب الافتراضي بالضبط (budgetAccountId === '' وليس أي رمز آخر)
+    const accId = window.lsGet('budgetAccountId');
+    if(accId===''){
+      return await fbGet(`salary_${cy}_${cm}`);
+    }
+    return null;
+  };
 
   window._firebaseReady = true;
   window.dispatchEvent(new Event('firebaseReady'));
@@ -428,20 +441,20 @@ body.kb-open{padding-bottom:0;}
 <div class="modal-bg" id="accountBg" onclick="if(event.target===this)closeAccountModal()">
   <div class="modal">
     <h3 style="color:var(--accent);text-align:center;">👤 الحساب</h3>
-    <p style="font-size:.8rem;color:var(--muted);margin:10px 0 6px;text-align:center;">رمز حسابك الحالي:</p>
-    <div id="accIdDisplay" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:.75rem;color:var(--text);text-align:center;word-break:break-all;margin-bottom:8px;direction:ltr;">—</div>
-    <button onclick="copyAccountId()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.82rem;cursor:pointer;margin-bottom:14px;">📋 نسخ الرمز</button>
-    <p style="font-size:.78rem;color:var(--muted);margin:0 0 8px;text-align:center;line-height:1.5;">لمشاركة بياناتك مع جهاز آخر، انسخ الرمز ولصقه هناك. لإنشاء حساب جديد مستقل تماماً (بدون أي بند حالي)، اضغط الزر بالأسفل.</p>
-    <button onclick="newAccountConfirm()" style="width:100%;padding:10px;border-radius:8px;border:none;background:var(--yellow);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;margin-bottom:8px;">🆕 بدء حساب مستقل جديد</button>
-    <input type="text" id="accIdInput" placeholder="ألصق رمز حساب هنا..." style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.8rem;margin-bottom:8px;direction:ltr;text-align:center;"/>
-    <button onclick="useAccountId()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;margin-bottom:8px;">استخدام هذا الرمز</button>
-    <button onclick="backToDefaultAccount()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.8rem;cursor:pointer;margin-bottom:8px;">↩️ الرجوع لحسابي الأصلي (بدون رمز)</button>
-    <div style="border-top:1px solid var(--border);margin:14px 0;padding-top:14px;">
-      <p style="font-size:.78rem;color:var(--muted);margin:0 0 10px;text-align:center;line-height:1.5;">🔗 اربط رقم جوال وكلمة سر بهذا الحساب، عشان تقدر تدخل له من جهاز ثاني (آيباد، لابتوب...) بشاشة الدخول العادية.</p>
+
+    <p style="font-size:.8rem;color:var(--muted);margin:10px 0 10px;text-align:center;line-height:1.6;">أدخل رقم جوال وكلمة سر للتبديل لحساب آخر (حسابك أو حساب أي شخص):</p>
+    <input type="tel" id="switchPhone" placeholder="رقم الجوال" style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.9rem;margin-bottom:8px;direction:ltr;text-align:right;"/>
+    <input type="password" id="switchPass" placeholder="كلمة السر" style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.9rem;margin-bottom:8px;"/>
+    <button onclick="switchAccount()" style="width:100%;padding:11px;border-radius:8px;border:none;background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;margin-bottom:14px;">دخول</button>
+
+    <div style="border-top:1px solid var(--border);margin-bottom:14px;padding-top:14px;">
+      <p style="font-size:.78rem;color:var(--muted);margin:0 0 10px;text-align:center;line-height:1.5;">اربط رقم جوال وكلمة سر بحسابك الحالي، عشان تدخل له من أي جهاز:</p>
       <input type="tel" id="linkPhoneInput" placeholder="رقم الجوال" style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.85rem;margin-bottom:8px;direction:ltr;text-align:right;"/>
       <input type="password" id="linkPassInput" placeholder="كلمة السر" style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.85rem;margin-bottom:8px;"/>
       <button onclick="linkPhoneConfirm()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--accent);background:transparent;color:var(--accent);font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;">🔗 ربط بهذا الحساب</button>
     </div>
+
+    <button onclick="backToDefaultAccount()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.8rem;cursor:pointer;margin-bottom:8px;">↩️ الرجوع لحسابي الأصلي</button>
     <button onclick="closeAccountModal()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.85rem;cursor:pointer;">إغلاق</button>
   </div>
 </div>
@@ -683,6 +696,11 @@ body.kb-open{padding-bottom:0;}
 </div>
 
 <script>
+// طبقة تخزين آمنة — تعمل حتى لو حظر المتصفح localStorage (مثل Safari عند فتح ملف محلي)
+window._memLS=window._memLS||{};
+window.lsGet=window.lsGet||function(k){try{return localStorage.getItem(k);}catch(e){return (k in window._memLS)?window._memLS[k]:null;}};
+window.lsSet=window.lsSet||function(k,v){try{localStorage.setItem(k,v);}catch(e){window._memLS[k]=v;}};
+window.lsRemove=window.lsRemove||function(k){try{localStorage.removeItem(k);}catch(e){delete window._memLS[k];}};
 // ══════════════════════════════════════════════════
 // DEDUCT MODAL
 // ══════════════════════════════════════════════════
@@ -838,9 +856,9 @@ const skey=()=>`sal3_${CY}_${CM}`;
 const dc=x=>JSON.parse(JSON.stringify(x));
 const loadCats=()=>dc(DEFAULTS);
 const loadSal=()=>10000;
-localStorage.removeItem('_loaded');
+window.lsRemove('_loaded');
 let cats=loadCats(), salary=loadSal();
-let balHidden=localStorage.getItem('balHidden')==='1';
+let balHidden=window.lsGet('balHidden')==='1';
 
 // حمّل من Cloud عند أول فتح
 async function loadFromCloud(){
@@ -907,7 +925,7 @@ async function doLogin(){
       if(alias!==null&&alias!==undefined) finalId=alias;
     }catch(e){}
   }
-  localStorage.setItem('budgetAccountId',finalId);
+  window.lsSet('budgetAccountId',finalId);
   document.getElementById('loginGateScreen').style.display='none';
   document.getElementById('loadingScreen').style.display='flex';
   if(window._firebaseReady){loadFromCloud();}else{window.addEventListener('firebaseReady',loadFromCloud);}
@@ -916,13 +934,13 @@ function legacyDeviceConfirm(){document.getElementById('legacyConfirmBg').classL
 function closeLegacyConfirm(){document.getElementById('legacyConfirmBg').classList.remove('show');}
 function confirmLegacyDevice(){
   document.getElementById('legacyConfirmBg').classList.remove('show');
-  localStorage.setItem('budgetAccountId','');
+  window.lsSet('budgetAccountId','');
   document.getElementById('loginGateScreen').style.display='none';
   document.getElementById('loadingScreen').style.display='flex';
   if(window._firebaseReady){loadFromCloud();}else{window.addEventListener('firebaseReady',loadFromCloud);}
 }
 function needsLogin(){
-  return localStorage.getItem('budgetAccountId')===null;
+  return window.lsGet('budgetAccountId')===null;
 }
 if(needsLogin()){
   document.getElementById('loadingScreen').style.display='none';
@@ -1001,7 +1019,7 @@ const MASK='••••••';
 const MASK_SM='•••';
 function toggleBalances(){
   balHidden=!balHidden;
-  localStorage.setItem('balHidden',balHidden?'1':'0');
+  window.lsSet('balHidden',balHidden?'1':'0');
   render();
 }
 function updateHdr(){
@@ -2040,7 +2058,7 @@ function confirmSubCat(){
     const newId='s'+Date.now();
     if(_scDeductType==='salary'){
       salary=Math.max(0,(parseFloat(salary)||0)-amt);
-      localStorage.setItem(skey(),salary);
+      window.lsSet(skey(),salary);
       parentCat.subs.push({
         id:newId,name,amt,chk:false,subs:[],
         isTemp:true,tempMonths:months,tempPaid:0,
@@ -2522,7 +2540,7 @@ function confirmDelete(){
   if(cat&&cat.isJawwal&&cat.jawwalType==='salary'){
     if((cat.jawwalPaid||0)<cat.jawwalMonths){
       salary=(parseFloat(salary)||0)+(parseFloat(cat.amt)||0);
-      localStorage.setItem(skey(),salary);
+      window.lsSet(skey(),salary);
     }
   }
   // إذا بند عادي → حدّث jawwalMap في أي جوال مرتبط به
@@ -3280,26 +3298,30 @@ function goToResult(idx){
 }
 
 function openAccountModal(){
-  const accId=localStorage.getItem('budgetAccountId');
-  document.getElementById('accIdDisplay').textContent=accId||'(الحساب الافتراضي — بدون رمز)';
-  document.getElementById('accIdInput').value='';
+  document.getElementById('switchPhone').value='';
+  document.getElementById('switchPass').value='';
+  document.getElementById('linkPhoneInput').value='';
+  document.getElementById('linkPassInput').value='';
   document.getElementById('accountBg').classList.add('show');
 }
 function closeAccountModal(){document.getElementById('accountBg').classList.remove('show');}
-function copyAccountId(){
-  const accId=localStorage.getItem('budgetAccountId')||'';
-  if(!accId){alert('لا يوجد رمز حالياً — هذا هو الحساب الافتراضي');return;}
-  navigator.clipboard.writeText(accId).then(()=>alert('تم نسخ الرمز ✓')).catch(()=>alert(accId));
-}
-function newAccountConfirm(){
+async function switchAccount(){
+  const phone=document.getElementById('switchPhone').value.trim();
+  const pass=document.getElementById('switchPass').value;
+  if(!phone||!pass){alert('أدخل رقم الجوال وكلمة السر');return;}
+  const derivedId=await deriveAccountId(phone,pass);
+  let finalId=derivedId;
+  if(window._fbGet){
+    try{const alias=await window._fbGet('alias_'+derivedId);if(alias!==null&&alias!==undefined)finalId=alias;}catch(e){}
+  }
+  window.lsSet('budgetAccountId',finalId);
   document.getElementById('accountBg').classList.remove('show');
-  document.getElementById('newAccountConfirmBg').classList.add('show');
+  location.reload();
 }
-function closeNewAccountConfirm(){document.getElementById('newAccountConfirmBg').classList.remove('show');}
 async function confirmNewAccount(){
   document.getElementById('newAccountConfirmBg').classList.remove('show');
   const newId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():(Date.now()+'-'+Math.random().toString(36).slice(2));
-  localStorage.setItem('budgetAccountId',newId);
+  window.lsSet('budgetAccountId',newId);
   // اعرض قائمة المثال — نفس ما يشوفه أي شخص جديد يسجّل دخول لأول مرة (لا يوجد بيانات سحابية لهذا الرمز بعد)
   cats=dc(DEFAULTS);salary=loadSal();
   render();updateHdr();
@@ -3310,11 +3332,11 @@ async function confirmNewAccount(){
 function useAccountId(){
   const val=document.getElementById('accIdInput').value.trim();
   if(!val){alert('ألصق رمزاً أولاً');return;}
-  localStorage.setItem('budgetAccountId',val);
+  window.lsSet('budgetAccountId',val);
   location.reload();
 }
 function backToDefaultAccount(){
-  localStorage.setItem('budgetAccountId','');
+  window.lsSet('budgetAccountId','');
   location.reload();
 }
 function linkPhoneConfirm(){
@@ -3329,7 +3351,7 @@ async function confirmLinkPhone(){
   const phone=document.getElementById('linkPhoneInput').value.trim();
   const pass=document.getElementById('linkPassInput').value;
   const derivedId=await deriveAccountId(phone,pass);
-  const currentId=localStorage.getItem('budgetAccountId')||'';
+  const currentId=window.lsGet('budgetAccountId')||'';
   if(window._fbSet){
     await window._fbSet('alias_'+derivedId,currentId);
     alert('تم الربط ✓ — تقدر تدخل لهذا الحساب من أي جهاز بنفس الرقم وكلمة السر');
