@@ -242,9 +242,17 @@ body.kb-open{padding-bottom:0;}
         if(s.subs) s.subs.forEach(ss=>{checks[ss.id]=ss.chk||false;});
       });
     });
-    return fbSet(`checks_${cy}_${cm}`,checks);
+    return fbSet('chk_'+window.fbKey(cy,cm),checks);
   };
-  window.fbLoadChecks = (cy,cm) => fbGet(`checks_${cy}_${cm}`);
+  window.fbLoadChecks = async (cy,cm) => {
+    const v = await fbGet('chk_'+window.fbKey(cy,cm));
+    if(v!==null && v!==undefined) return v;
+    const accId = window.lsGet('budgetAccountId');
+    if(accId===''){
+      return await fbGet(`checks_${cy}_${cm}`);
+    }
+    return null;
+  };
 
   // الراتب
   window.fbSaveSalary = (sal,cy,cm) => fbSet('sal_'+window.fbKey(cy,cm),sal);
