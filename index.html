@@ -417,7 +417,8 @@ body.kb-open{padding-bottom:0;}
 <div class="modal-bg" id="legacyConfirmBg" style="z-index:10001;" onclick="if(event.target===this)closeLegacyConfirm()">
   <div class="modal">
     <h3 style="color:var(--yellow);">🔑 تأكيد الجهاز الأصلي</h3>
-    <p style="font-size:.85rem;color:var(--muted);margin:10px 0 16px;text-align:center;line-height:1.6;">هذا الخيار مخصص لصاحب الحساب الأصلي فقط، ويربط هذا الجهاز ببياناته القديمة مباشرة. متأكد إنك صاحب الحساب؟</p>
+    <p id="legacyConfirmText" style="font-size:.85rem;color:var(--muted);margin:10px 0 12px;text-align:center;line-height:1.6;">هذا الخيار مخصص لصاحب الحساب الأصلي فقط. متأكد إنك صاحب الحساب؟</p>
+    <input type="password" id="legacyPwInput" placeholder="كلمة سر الحماية" style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.9rem;margin-bottom:12px;"/>
     <div style="display:flex;gap:8px;">
       <button onclick="confirmLegacyDevice()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--yellow);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">نعم، متأكد ✓</button>
       <button onclick="closeLegacyConfirm()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
@@ -930,9 +931,34 @@ async function doLogin(){
   document.getElementById('loadingScreen').style.display='flex';
   if(window._firebaseReady){loadFromCloud();}else{window.addEventListener('firebaseReady',loadFromCloud);}
 }
-function legacyDeviceConfirm(){document.getElementById('legacyConfirmBg').classList.add('show');}
+let _legacyPwMode='enter';
+async function legacyDeviceConfirm(){
+  document.getElementById('legacyPwInput').value='';
+  let hasLock=false;
+  if(window._fbGet){
+    try{const lock=await window._fbGet('owner_lock');hasLock=(lock!==null&&lock!==undefined);}catch(e){}
+  }
+  if(hasLock){
+    _legacyPwMode='enter';
+    document.getElementById('legacyConfirmText').textContent='هذا الخيار مخصص لصاحب الحساب الأصلي فقط. أدخل كلمة سر الحماية للمتابعة:';
+  } else {
+    _legacyPwMode='set';
+    document.getElementById('legacyConfirmText').textContent='أول استخدام لهذا الزر — اختر كلمة سر حماية له الآن. لازم تتذكرها، لأنها ستُطلب منك ومن أي شخص يحاول الوصول لحسابك من هذا الزر لاحقاً.';
+  }
+  document.getElementById('legacyConfirmBg').classList.add('show');
+}
 function closeLegacyConfirm(){document.getElementById('legacyConfirmBg').classList.remove('show');}
-function confirmLegacyDevice(){
+async function confirmLegacyDevice(){
+  const pw=document.getElementById('legacyPwInput').value;
+  if(!pw){alert('أدخل كلمة السر');return;}
+  const pwHash=await deriveAccountId('OWNER_LOCK_V1',pw);
+  if(_legacyPwMode==='set'){
+    if(window._fbSet){await window._fbSet('owner_lock',pwHash);}
+  } else {
+    let storedHash=null;
+    if(window._fbGet){try{storedHash=await window._fbGet('owner_lock');}catch(e){}}
+    if(storedHash!==pwHash){alert('كلمة السر غير صحيحة');return;}
+  }
   document.getElementById('legacyConfirmBg').classList.remove('show');
   window.lsSet('budgetAccountId','');
   document.getElementById('loginGateScreen').style.display='none';
@@ -3311,9 +3337,11 @@ async function switchAccount(){
   if(!phone||!pass){alert('أدخل رقم الجوال وكلمة السر');return;}
   const derivedId=await deriveAccountId(phone,pass);
   let finalId=derivedId;
+  let aliasFound=false;
   if(window._fbGet){
-    try{const alias=await window._fbGet('alias_'+derivedId);if(alias!==null&&alias!==undefined)finalId=alias;}catch(e){}
+    try{const alias=await window._fbGet('alias_'+derivedId);if(alias!==null&&alias!==undefined){finalId=alias;aliasFound=true;}}catch(e){}
   }
+  alert('رمز التحقق: '+derivedId.slice(0,8)+'\nربط موجود؟ '+(aliasFound?'نعم ✓':'لا — لم يُعثر على ربط لهذا الرقم/كلمة السر'));
   window.lsSet('budgetAccountId',finalId);
   document.getElementById('accountBg').classList.remove('show');
   location.reload();
@@ -3354,7 +3382,7 @@ async function confirmLinkPhone(){
   const currentId=window.lsGet('budgetAccountId')||'';
   if(window._fbSet){
     await window._fbSet('alias_'+derivedId,currentId);
-    alert('تم الربط ✓ — تقدر تدخل لهذا الحساب من أي جهاز بنفس الرقم وكلمة السر');
+    alert('تم الربط ✓\nرمز التحقق: '+derivedId.slice(0,8)+'\n\nاحتفظ بهذا الرمز لو حبيت تتأكد لاحقاً إنه نفس الرقم وكلمة السر.');
   } else {
     alert('تعذّر الربط — تأكد من اتصالك بالإنترنت وحاول مرة أخرى');
   }
