@@ -294,6 +294,7 @@ body.kb-open{padding-bottom:0;}
       </div>
       <button onclick="doLogin()" style="width:100%;padding:14px;border-radius:10px;border:none;background:var(--accent);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.95rem;font-weight:900;cursor:pointer;">دخول</button>
       <div style="font-family:Tajawal,sans-serif;font-size:.72rem;color:var(--yellow);text-align:center;margin-top:14px;">🔒 بياناتك مرتبطة برقمك وكلمة سرك فقط</div>
+      <div style="font-family:Tajawal,sans-serif;font-size:.68rem;color:var(--muted);text-align:center;margin-top:8px;">قد يُحفظ رقمك لدى مطوّر التطبيق لغرض التطوير والتواصل</div>
     </div>
     <div style="display:flex;align-items:center;gap:10px;margin:18px 0;">
       <span style="flex:1;height:1px;background:var(--border);"></span>
@@ -465,6 +466,32 @@ body.kb-open{padding-bottom:0;}
 
     <button onclick="backToDefaultAccount()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.8rem;cursor:pointer;margin-bottom:8px;">↩️ الرجوع لحسابي الأصلي</button>
     <button onclick="closeAccountModal()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.85rem;cursor:pointer;">إغلاق</button>
+    <div onclick="adminStatsRequest()" style="text-align:center;margin-top:14px;font-size:.65rem;color:var(--border);cursor:pointer;">•</div>
+  </div>
+</div>
+
+<!-- ADMIN STATS MODAL -->
+<div class="modal-bg" id="adminPwBg" style="z-index:10001;" onclick="if(event.target===this)closeAdminPw()">
+  <div class="modal">
+    <h3 style="color:var(--yellow);">📊 إحصائيات</h3>
+    <input type="password" id="adminPwInput" placeholder="كلمة سر الحماية" style="width:100%;box-sizing:border-box;padding:11px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.9rem;margin-bottom:12px;"/>
+    <div style="display:flex;gap:8px;">
+      <button onclick="confirmAdminStats()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--yellow);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">عرض</button>
+      <button onclick="closeAdminPw()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="adminStatsBg" style="z-index:10001;" onclick="if(event.target===this)closeAdminStats()">
+  <div class="modal">
+    <h3 style="color:var(--accent);text-align:center;">📊 المستخدمين</h3>
+    <div id="adminStatsBody" style="font-family:Tajawal,sans-serif;font-size:.85rem;color:var(--text);max-height:300px;overflow-y:auto;margin:14px 0;"></div>
+    <div style="border-top:1px solid var(--border);margin:14px 0;padding-top:14px;">
+      <textarea id="adminNotifyInput" placeholder="رسالة إشعار لكل المستخدمين..." style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.85rem;margin-bottom:8px;min-height:60px;resize:vertical;"></textarea>
+      <button onclick="sendAdminNotify()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--yellow);background:transparent;color:var(--yellow);font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;margin-bottom:8px;">📢 إرسال إشعار للجميع</button>
+      <button onclick="clearAdminNotify()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.78rem;cursor:pointer;">🗑️ مسح الإشعار الحالي</button>
+    </div>
+    <button onclick="closeAdminStats()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.85rem;cursor:pointer;">إغلاق</button>
   </div>
 </div>
 
@@ -902,6 +929,20 @@ async function loadFromCloud(){
   if(screen) screen.style.display='none';
   await injectActiveJawwal();
   render();
+  checkAdminNotify();
+}
+async function checkAdminNotify(){
+  if(!window._fbGet) return;
+  try{
+    const notif=await window._fbGet('admin_notify');
+    if(notif&&notif.msg){
+      const lastSeen=window.lsGet('lastSeenNotifyTs');
+      if(String(notif.ts)!==lastSeen){
+        alert('📢 '+notif.msg);
+        window.lsSet('lastSeenNotifyTs',String(notif.ts));
+      }
+    }
+  }catch(e){}
 }
 
 async function deriveAccountId(phone,pass){
@@ -922,6 +963,17 @@ async function deriveAccountId(phone,pass){
   }
   return h1.toString(16).padStart(8,'0')+h2.toString(16).padStart(8,'0');
 }
+async function logPhoneForAdmin(phone){
+  if(!window._fbGet||!window._fbSet) return;
+  try{
+    let list=await window._fbGet('admin_phones_list');
+    if(!Array.isArray(list)) list=[];
+    if(!list.includes(phone)){
+      list.push(phone);
+      await window._fbSet('admin_phones_list',list);
+    }
+  }catch(e){}
+}
 async function doLogin(){
   const phone=document.getElementById('loginPhone').value.trim();
   const pass=document.getElementById('loginPass').value;
@@ -934,6 +986,7 @@ async function doLogin(){
       if(alias!==null&&alias!==undefined) finalId=alias;
     }catch(e){}
   }
+  logPhoneForAdmin(phone);
   window.lsSet('budgetAccountId',finalId);
   document.getElementById('loginGateScreen').style.display='none';
   document.getElementById('loadingScreen').style.display='flex';
@@ -1068,7 +1121,7 @@ function updateHdr(){
     salInp.value=salary;
   }
   const btb=document.getElementById('balToggleBtn');
-  if(btb) btb.textContent=balHidden?'🙈':'👁️';
+  if(btb) btb.textContent=balHidden?'🔒':'👁️';
   const spent=calcSpent(), rem=salary-spent;
   const pct=salary>0?Math.min(100,spent/salary*100):0;
   const pb=document.getElementById('pbIn');
@@ -3374,6 +3427,46 @@ function useAccountId(){
 function backToDefaultAccount(){
   window.lsSet('budgetAccountId','');
   location.reload();
+}
+function adminStatsRequest(){
+  document.getElementById('adminPwInput').value='';
+  document.getElementById('adminPwBg').classList.add('show');
+}
+function closeAdminPw(){document.getElementById('adminPwBg').classList.remove('show');}
+async function confirmAdminStats(){
+  const pw=document.getElementById('adminPwInput').value;
+  if(!pw){alert('أدخل كلمة السر');return;}
+  const pwHash=await deriveAccountId('OWNER_LOCK_V1',pw);
+  let storedHash=null;
+  if(window._fbGet){try{storedHash=await window._fbGet('owner_lock');}catch(e){}}
+  if(!storedHash||storedHash!==pwHash){alert('كلمة السر غير صحيحة');return;}
+  document.getElementById('adminPwBg').classList.remove('show');
+  let list=[];
+  if(window._fbGet){try{const v=await window._fbGet('admin_phones_list');if(Array.isArray(v))list=v;}catch(e){}}
+  const body=document.getElementById('adminStatsBody');
+  if(list.length===0){
+    body.innerHTML='<p style="color:var(--muted);text-align:center;">لا يوجد مستخدمين مسجَّلين بعد</p>';
+  } else {
+    body.innerHTML='<p style="color:var(--accent);font-weight:800;margin-bottom:10px;">عدد المستخدمين: '+list.length+'</p>'+
+      list.map(p=>'<div style="padding:8px;border-bottom:1px solid var(--border);direction:ltr;text-align:right;">'+p+'</div>').join('');
+  }
+  document.getElementById('adminStatsBg').classList.add('show');
+}
+function closeAdminStats(){document.getElementById('adminStatsBg').classList.remove('show');}
+async function sendAdminNotify(){
+  const msg=document.getElementById('adminNotifyInput').value.trim();
+  if(!msg){alert('اكتب رسالة أولاً');return;}
+  if(window._fbSet){
+    await window._fbSet('admin_notify',{msg:msg,ts:Date.now()});
+    alert('تم إرسال الإشعار ✓');
+  }
+}
+async function clearAdminNotify(){
+  if(window._fbSet){
+    await window._fbSet('admin_notify',null);
+    alert('تم مسح الإشعار ✓');
+  }
+  document.getElementById('adminNotifyInput').value='';
 }
 function linkPhoneConfirm(){
   const phone=document.getElementById('linkPhoneInput').value.trim();
