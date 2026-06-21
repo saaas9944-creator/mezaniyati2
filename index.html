@@ -432,6 +432,7 @@ body.kb-open{padding-bottom:0;}
       <button onclick="confirmLegacyDevice()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--yellow);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">نعم، متأكد ✓</button>
       <button onclick="closeLegacyConfirm()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
     </div>
+    <div onclick="forgotPasswordFlow()" style="text-align:center;margin-top:12px;font-size:.75rem;color:var(--accent);cursor:pointer;text-decoration:underline;">نسيت كلمة السر؟</div>
   </div>
 </div>
 
@@ -466,7 +467,7 @@ body.kb-open{padding-bottom:0;}
 
     <button onclick="backToDefaultAccount()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.8rem;cursor:pointer;margin-bottom:8px;">↩️ الرجوع لحسابي الأصلي</button>
     <button onclick="closeAccountModal()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.85rem;cursor:pointer;">إغلاق</button>
-    <div onclick="adminStatsRequest()" style="text-align:center;margin-top:14px;font-size:.65rem;color:var(--border);cursor:pointer;">•</div>
+    <div onclick="adminStatsRequest()" style="text-align:center;margin-top:16px;padding:8px;font-size:1.1rem;color:var(--muted);opacity:.4;cursor:pointer;">•</div>
   </div>
 </div>
 
@@ -492,6 +493,34 @@ body.kb-open{padding-bottom:0;}
       <button onclick="clearAdminNotify()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-family:Tajawal,sans-serif;font-size:.78rem;cursor:pointer;">🗑️ مسح الإشعار الحالي</button>
     </div>
     <button onclick="closeAdminStats()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.85rem;cursor:pointer;">إغلاق</button>
+    <button onclick="openDiagModal()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--red);background:transparent;color:var(--red);font-family:Tajawal,sans-serif;font-size:.75rem;cursor:pointer;margin-top:10px;">🔍 تشخيص مفتاح خام (Firebase)</button>
+    <button onclick="bulkRestoreConfirm()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--yellow);background:transparent;color:var(--yellow);font-family:Tajawal,sans-serif;font-size:.75rem;cursor:pointer;margin-top:8px;">♻️ استرجاع جماعي (يوليو 2026 - ديسمبر 2030)</button>
+    <button onclick="resetOwnerLock()" style="width:100%;padding:8px;border-radius:8px;border:1px solid var(--green);background:transparent;color:var(--green);font-family:Tajawal,sans-serif;font-size:.75rem;cursor:pointer;margin-top:8px;">🔓 إعادة ضبط كلمة سر الحماية</button>
+  </div>
+</div>
+
+<!-- DIAGNOSTIC MODAL (read-only) -->
+<!-- BULK RESTORE MODAL -->
+<div class="modal-bg" id="bulkRestoreBg" style="z-index:10001;" onclick="if(event.target===this)closeBulkRestore()">
+  <div class="modal">
+    <h3 style="color:var(--yellow);">♻️ استرجاع جماعي</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin:10px 0 12px;text-align:center;line-height:1.6;">سيُكتب نفس بنودك الثابتة (بدون قسط جوالي) على كل شهر من يوليو 2026 إلى ديسمبر 2030 — 54 شهر. الراتب سيكون 16367 بكل شهر. هذا يستبدل أي محتوى حالي بهذي الشهور بالكامل. متأكد؟</p>
+    <div id="bulkRestoreProgress" style="font-size:.8rem;color:var(--accent);text-align:center;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:8px;">
+      <button id="bulkRestoreGoBtn" onclick="runBulkRestore()" style="flex:1;padding:10px;border-radius:8px;border:none;background:var(--yellow);color:#0d1117;font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">تنفيذ ✓</button>
+      <button onclick="closeBulkRestore()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.9rem;font-weight:800;cursor:pointer;">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="diagBg" style="z-index:10001;" onclick="if(event.target===this)closeDiagModal()">
+  <div class="modal">
+    <h3 style="color:var(--red);text-align:center;">🔍 تشخيص (قراءة فقط)</h3>
+    <p style="font-size:.75rem;color:var(--muted);margin:8px 0 12px;text-align:center;">يعرض محتوى مفتاح Firebase الخام بدون أي تعديل عليه.</p>
+    <input type="text" id="diagKeyInput" placeholder="اسم المفتاح، مثلاً: bgt3_2026_5" style="width:100%;box-sizing:border-box;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-family:Tajawal,sans-serif;font-size:.8rem;margin-bottom:8px;direction:ltr;text-align:left;"/>
+    <button onclick="runDiag()" style="width:100%;padding:10px;border-radius:8px;border:none;background:var(--red);color:#fff;font-family:Tajawal,sans-serif;font-size:.85rem;font-weight:800;cursor:pointer;margin-bottom:10px;">عرض المحتوى</button>
+    <pre id="diagOutput" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;font-size:.68rem;color:var(--text);max-height:280px;overflow:auto;direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-all;"></pre>
+    <button onclick="closeDiagModal()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--muted);font-family:Tajawal,sans-serif;font-size:.85rem;cursor:pointer;margin-top:10px;">إغلاق</button>
   </div>
 </div>
 
@@ -3411,12 +3440,7 @@ async function confirmNewAccount(){
   document.getElementById('newAccountConfirmBg').classList.remove('show');
   const newId=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():(Date.now()+'-'+Math.random().toString(36).slice(2));
   window.lsSet('budgetAccountId',newId);
-  // اعرض قائمة المثال — نفس ما يشوفه أي شخص جديد يسجّل دخول لأول مرة (لا يوجد بيانات سحابية لهذا الرمز بعد)
-  cats=dc(DEFAULTS);salary=loadSal();
-  render();updateHdr();
-  await loadFromCloud();
-  render();updateHdr();
-  alert('هذا تماماً ما يشوفه صديقك أول ما يسجّل دخول ✓');
+  location.reload();
 }
 function useAccountId(){
   const val=document.getElementById('accIdInput').value.trim();
@@ -3453,6 +3477,111 @@ async function confirmAdminStats(){
   document.getElementById('adminStatsBg').classList.add('show');
 }
 function closeAdminStats(){document.getElementById('adminStatsBg').classList.remove('show');}
+function openDiagModal(){
+  document.getElementById('diagKeyInput').value='bgt3_'+CY+'_'+CM;
+  document.getElementById('diagOutput').textContent='';
+  document.getElementById('diagBg').classList.add('show');
+}
+function closeDiagModal(){document.getElementById('diagBg').classList.remove('show');}
+const BULK_RESTORE_CATS = [{"id": "unplanned", "name": "مصاريف غير محسوبة 💳", "amt": 747, "chk": false, "open": true, "subs": []}, {"id": "wknds", "name": "ويكيندات (تساهيل) 🛍️", "amt": 479, "chk": false, "open": true, "subs": []}, {"id": "food", "name": "مطاعم 🍔", "amt": 1861, "chk": false, "open": true, "subs": []}, {"id": "groc", "name": "سوبرماركت 🛒", "amt": 2070, "chk": false, "open": false, "subs": [{"id": "g1", "name": "سوبرماركت يومي", "amt": 620, "chk": false, "subs": []}, {"id": "g2", "name": "سوبرماركت أسبوعي", "amt": 1450, "chk": false, "subs": []}, {"id": "g3", "name": "أمازون", "amt": 21, "chk": false, "subs": []}, {"id": "g4", "name": "54-", "amt": 54, "chk": false, "subs": []}]}, {"id": "subs", "name": "اشتراكات 📱", "amt": 953, "chk": false, "open": true, "subs": [{"id": "sb1", "name": "مو", "amt": 248, "chk": false, "subs": [{"id": "ss1781195580566", "name": "رد", "amt": 124, "chk": false}, {"id": "ss1781912169064", "name": "رد", "amt": 84, "chk": false}]}, {"id": "sb2", "name": "كهرباء", "amt": 377, "chk": false, "subs": []}, {"id": "sb3", "name": "قسط النت (تساهيل)", "amt": 170, "chk": false, "subs": []}, {"id": "sb5", "name": "المجاري", "amt": 36.55, "chk": false, "subs": []}, {"id": "sb6", "name": "فاتورة جوال", "amt": 121, "chk": false, "subs": []}]}, {"id": "ishraf", "name": "الإشراف 🏠", "amt": 1500, "chk": false, "open": true, "subs": [{"id": "i1", "name": "استثمار دراهم", "amt": 700, "chk": false, "subs": []}, {"id": "i2", "name": "ادخار", "amt": 800, "chk": false, "subs": []}], "isExtra": true, "isJawwal": false}, {"id": "loan", "name": "القرض 💳", "amt": 4637, "chk": false, "open": true, "subs": []}, {"id": "hamida", "name": "1000 حامدة ❤️❤️❤️❤️", "amt": 1000, "chk": false, "open": true, "subs": [{"id": "s1780915862305", "name": "كيك", "amt": 200, "chk": false, "subs": []}, {"id": "s1780915885688", "name": "جزمة", "amt": 279, "chk": false, "subs": []}, {"id": "s1781024216997", "name": "الأخوات", "amt": 300, "chk": false, "subs": []}, {"id": "s1781449973278", "name": "تحويل لنادية", "amt": 200, "chk": false, "subs": []}]}, {"id": "travel", "name": "سياحة ✈️", "amt": 700, "chk": false, "open": true, "subs": []}, {"id": "miriam", "name": "صدقة مريم — ادخار للشهر 5 🌸", "amt": 0, "chk": false, "open": false, "subs": [], "isExtra": false, "isJawwal": false}, {"id": "sadaqa", "name": "صدقتي 200 — للادخار الشهر 5", "amt": 200, "chk": false, "open": false, "subs": []}, {"id": "shabab", "name": "صدقة الشباب", "amt": 0, "chk": false, "open": false, "subs": []}, {"id": "petrol", "name": "بنزين ⛽", "amt": 750, "chk": false, "open": false, "subs": [], "isExtra": false, "isJawwal": false}, {"id": "dirah", "name": "500 الديرة 🏙️", "amt": 500, "chk": false, "open": false, "subs": []}, {"id": "ahli", "name": "450 الأهلي 🏦", "amt": 450, "chk": false, "open": false, "subs": [{"id": "a1", "name": "50 زيت سيارة", "amt": 50, "chk": false, "subs": []}, {"id": "a2", "name": "200 احتياطي سنوي", "amt": 200, "chk": false, "subs": []}, {"id": "a3", "name": "200 صيانة سيارة", "amt": 200, "chk": false, "subs": []}]}, {"id": "lastweek", "name": "300 آخر أسبوع 🗓️", "amt": 300, "chk": false, "open": false, "subs": []}, {"id": "myex", "name": "200 مصروفي", "amt": 200, "chk": false, "open": true, "subs": []}, {"id": "qamrjana", "name": "500 قمرجنة 👧👧👧👧👧", "amt": 500, "chk": false, "open": true, "subs": [{"id": "s1781024298689", "name": "صدقة", "amt": 51, "chk": false, "subs": []}, {"id": "s1781195779026", "name": "اخرى", "amt": 50, "chk": false, "subs": []}, {"id": "s1781195802695", "name": "مخالفات", "amt": 199, "chk": false, "subs": []}]}, {"id": "health", "name": "صحة 🩺🩺🩺🩺🩺", "amt": 200, "chk": false, "open": false, "subs": [], "isExtra": false, "isJawwal": false}, {"id": "shagala", "name": "شغالة", "amt": 320, "chk": false, "open": true, "subs": [{"id": "s1781195710042", "name": "زياة", "amt": 80, "chk": false, "subs": []}, {"id": "s1781195718753", "name": "زيارة", "amt": 80, "chk": false, "subs": []}, {"id": "s1781195731809", "name": "زيارة ٣", "amt": 80, "chk": false, "subs": []}, {"id": "s1781698237538", "name": "زيارة ٤", "amt": 80, "chk": false, "subs": []}], "isExtra": false, "isJawwal": false}, {"id": "gift", "name": "500 هدية 🎁", "amt": 500, "chk": false, "open": true, "subs": [{"id": "s1781024649473", "name": "ايباد", "amt": 370, "chk": false, "subs": []}]}, {"id": "c1781192936342", "name": "مكتبي", "amt": 140, "chk": false, "open": true, "subs": [{"id": "s1781198080039", "name": "اخو عمر", "amt": 50, "chk": false, "subs": []}, {"id": "s1781198131564", "name": "مستخرج تجاري", "amt": 20, "chk": false, "subs": []}], "isExtra": true, "isJawwal": false}];
+async function forgotPasswordFlow(){
+  let storedEmailHash=null;
+  if(window._fbGet){try{storedEmailHash=await window._fbGet('owner_email');}catch(e){}}
+  if(!storedEmailHash){
+    alert('لا يوجد إيميل تأكيدي مسجَّل بعد. اضغط "🔓 إعادة ضبط كلمة سر الحماية" من لوحة الإحصائيات بعد ما تدخل بطريقة ثانية، لتسجيل إيميل لأول مرة.');
+    return;
+  }
+  const email=prompt('اكتب نفس الإيميل اللي سجّلته وقت ضبط كلمة السر:');
+  if(!email) return;
+  const emailHash=await deriveAccountId('OWNER_EMAIL_V1',email.trim().toLowerCase());
+  if(emailHash!==storedEmailHash){
+    alert('الإيميل غير مطابق');
+    return;
+  }
+  const newPw=prompt('✅ الإيميل صحيح. اكتب كلمة سر جديدة الآن:');
+  if(!newPw){alert('ما تم التغيير');return;}
+  const pwHash=await deriveAccountId('OWNER_LOCK_V1',newPw);
+  if(window._fbSet){
+    await window._fbSet('owner_lock',pwHash);
+    alert('✅ تم ضبط كلمة السر الجديدة بنجاح.');
+    closeLegacyConfirm();
+  }
+}
+async function resetOwnerLock(){
+  const newPw=prompt('اكتب كلمة سر جديدة لزر "🔑 هذا جهازي الأصلي" ولوحة الإحصائيات:');
+  if(!newPw){alert('ما تم التغيير');return;}
+  const email=prompt('اكتب إيميلك — يُستخدم فقط للتحقق لو نسيت كلمة السر لاحقاً (لن يُرسل له أي شي):');
+  if(!email){alert('لازم تكتب إيميل للمتابعة');return;}
+  const pwHash=await deriveAccountId('OWNER_LOCK_V1',newPw);
+  const emailHash=await deriveAccountId('OWNER_EMAIL_V1',email.trim().toLowerCase());
+  if(window._fbSet){
+    await window._fbSet('owner_lock',pwHash);
+    await window._fbSet('owner_email',emailHash);
+    alert('✅ تم ضبط كلمة السر والإيميل التأكيدي بنجاح.');
+  } else {
+    alert('تعذّر الحفظ — تأكد من الاتصال بالإنترنت');
+  }
+}
+function bulkRestoreConfirm(){
+  document.getElementById('bulkRestoreProgress').textContent='';
+  document.getElementById('bulkRestoreBg').classList.add('show');
+}
+function closeBulkRestore(){document.getElementById('bulkRestoreBg').classList.remove('show');}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+async function writeAndVerify(y,m,maxRetries){
+  const catsCopy=JSON.parse(JSON.stringify(BULK_RESTORE_CATS));
+  for(let attempt=1;attempt<=maxRetries;attempt++){
+    await window.fbSaveCats(catsCopy,y,m);
+    if(window.fbSaveSalary) await window.fbSaveSalary(16367,y,m);
+    await delay(250);
+    // تحقق فعلي: أعد القراءة وتأكد إن البند الأول يطابق (دليل كافٍ إن الكتابة نجحت ووصلت)
+    let verify=null;
+    try{ verify = await window.fbLoadCats(y,m); }catch(e){}
+    const ok = Array.isArray(verify) && verify.length>0 && verify[0].id===BULK_RESTORE_CATS[0].id && verify.length===BULK_RESTORE_CATS.length;
+    if(ok) return true;
+    await delay(400); // قبل إعادة المحاولة
+  }
+  return false;
+}
+async function runBulkRestore(){
+  const btn=document.getElementById('bulkRestoreGoBtn');
+  const prog=document.getElementById('bulkRestoreProgress');
+  btn.disabled=true;btn.style.opacity='.5';
+  if(!window.fbSaveCats){prog.textContent='خطأ: Firebase غير متاح';return;}
+  let startY=2026,startM=6; // يوليو 2026 (0-indexed)
+  let endY=2030,endM=11;    // ديسمبر 2030
+  let y=startY,m=startM,count=0,total=54;
+  const failed=[];
+  while(y<endY || (y===endY && m<=endM)){
+    prog.textContent='جاري الكتابة والتحقق: '+(m+1)+'/'+y+'  ('+(count+1)+'/'+total+')';
+    const ok = await writeAndVerify(y,m,3);
+    if(!ok) failed.push((m+1)+'/'+y);
+    count++;
+    await delay(150);
+    m++;
+    if(m>11){m=0;y++;}
+  }
+  if(failed.length===0){
+    prog.textContent='✅ تم الانتهاء بنجاح ومُتحقَّق منه — '+count+' شهر';
+  } else {
+    prog.textContent='⚠️ انتهى مع وجود '+failed.length+' شهر فشل: '+failed.join('، ')+'\n\nاضغط "تنفيذ ✓" مرة ثانية لإعادة محاولة الكل (آمن، يكتب نفس البيانات).';
+  }
+  btn.disabled=false;btn.style.opacity='1';
+}
+
+async function runDiag(){
+  const key=document.getElementById('diagKeyInput').value.trim();
+  const out=document.getElementById('diagOutput');
+  if(!key){out.textContent='اكتب اسم مفتاح';return;}
+  out.textContent='جاري التحميل...';
+  if(!window._fbGet){out.textContent='Firebase غير متاح';return;}
+  try{
+    const data=await window._fbGet(key);
+    out.textContent='المفتاح: '+key+'\n\n'+(data===null?'(لا يوجد — null)':JSON.stringify(data,null,2));
+  }catch(e){
+    out.textContent='خطأ: '+e.message;
+  }
+}
 async function sendAdminNotify(){
   const msg=document.getElementById('adminNotifyInput').value.trim();
   if(!msg){alert('اكتب رسالة أولاً');return;}
