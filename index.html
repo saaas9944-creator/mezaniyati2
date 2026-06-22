@@ -2384,7 +2384,20 @@ function paySubMonth(ci,si){
 // ══════════════════════════════════════════════════
 // OTHER
 // ══════════════════════════════════════════════════
-function salChanged(){pushUndo();salary=parseFloat(document.getElementById('salInp').value)||0;autoSave();updateHdr();}
+function salChanged(){
+  pushUndo();
+  salary=parseFloat(document.getElementById('salInp').value)||0;
+  autoSave();
+  updateHdr();
+  cascadeSalaryToYearEnd(salary,CY,CM);
+}
+async function cascadeSalaryToYearEnd(newSalary,cy,cmFrom){
+  if(!window.fbSaveSalary) return;
+  // ينشر نفس الراتب على بقية أشهر نفس السنة فقط (لا يتجاوز لسنة لاحقة)
+  for(let m=cmFrom+1;m<=11;m++){
+    try{ await window.fbSaveSalary(newSalary,cy,m); }catch(e){}
+  }
+}
 
 let _mcType='normal', _mcDeductType='salary';
 let _deductRows=[];
@@ -3543,11 +3556,17 @@ async function writeAndVerify(y,m,maxRetries){
   }
   return false;
 }
+let _bulkRestoreRunning=false;
 async function runBulkRestore(){
+  if(_bulkRestoreRunning){
+    alert('عملية استرجاع شغّالة بالفعل — انتظر لين تنتهي قبل ما تبدأ ثانية.');
+    return;
+  }
+  _bulkRestoreRunning=true;
   const btn=document.getElementById('bulkRestoreGoBtn');
   const prog=document.getElementById('bulkRestoreProgress');
   btn.disabled=true;btn.style.opacity='.5';
-  if(!window.fbSaveCats){prog.textContent='خطأ: Firebase غير متاح';return;}
+  if(!window.fbSaveCats){prog.textContent='خطأ: Firebase غير متاح';_bulkRestoreRunning=false;btn.disabled=false;btn.style.opacity='1';return;}
   let startY=2026,startM=6; // يوليو 2026 (0-indexed)
   let endY=2030,endM=11;    // ديسمبر 2030
   let y=startY,m=startM,count=0,total=54;
@@ -3567,6 +3586,7 @@ async function runBulkRestore(){
     prog.textContent='⚠️ انتهى مع وجود '+failed.length+' شهر فشل: '+failed.join('، ')+'\n\nاضغط "تنفيذ ✓" مرة ثانية لإعادة محاولة الكل (آمن، يكتب نفس البيانات).';
   }
   btn.disabled=false;btn.style.opacity='1';
+  _bulkRestoreRunning=false;
 }
 
 async function runDiag(){
