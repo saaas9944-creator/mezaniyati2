@@ -273,7 +273,7 @@ body.kb-open{padding-bottom:0;}
 </head>
 <body>
 <div id="monthPulse" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:8888;pointer-events:none;opacity:0;">
-  <img id="monthPulseIcon" src="" style="width:220px;height:220px;border-radius:40px;box-shadow:0 0 60px rgba(88,166,255,0.4);" />
+  <img id="monthPulseIcon" src="icon.png" style="width:220px;height:220px;border-radius:40px;box-shadow:0 0 60px rgba(88,166,255,0.4);" />
 </div>
 
 <div id="loginGateScreen" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:10000;overflow-y:auto;padding:24px 20px;box-sizing:border-box;">
@@ -3797,40 +3797,7 @@ function importData(e){
   e.target.value='';
 }
 
-// Generate app icon via canvas
-(function(){
-  try {
-    const canvas = document.createElement('canvas');
-    canvas.width = 192; canvas.height = 192;
-    const ctx = canvas.getContext('2d');
-    // background
-    const rr = (x,y,w,h,r) => {ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();};
-    rr(0,0,192,192,36); ctx.fillStyle='#0d1117'; ctx.fill();
-    // bag body
-    ctx.beginPath(); ctx.ellipse(110,115,52,58,0,0,Math.PI*2); ctx.fillStyle='#e8a020'; ctx.fill();
-    ctx.beginPath(); ctx.ellipse(110,115,48,54,0,0,Math.PI*2); ctx.fillStyle='#f5c040'; ctx.fill();
-    // bag neck
-    ctx.fillStyle='#d4941a';
-    rr(95,62,30,26,6); ctx.fill();
-    // ribbon
-    ctx.fillStyle='#3db887';
-    ctx.beginPath(); ctx.ellipse(100,68,13,7,-0.4,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.ellipse(120,68,13,7,0.4,0,Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(110,68,7,0,Math.PI*2); ctx.fillStyle='#2a9a70'; ctx.fill();
-    // dollar sign
-    ctx.font='bold 52px Arial'; ctx.fillStyle='#c8860a'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('﷼',110,120);
-    // coins
-    for(let i=0;i<3;i++){
-      ctx.beginPath(); ctx.ellipse(58,158-i*14,22,7,0,0,Math.PI*2); ctx.fillStyle='#c8860a'; ctx.fill();
-      ctx.fillRect(36,151-i*14,44,14); ctx.fillStyle='#c8860a'; ctx.fill();
-      ctx.beginPath(); ctx.ellipse(58,151-i*14,22,7,0,0,Math.PI*2); ctx.fillStyle='#f5c040'; ctx.fill();
-    }
-    const dataUrl = canvas.toDataURL('image/png');
-    document.getElementById('appIcon').href = dataUrl;
-    document.getElementById('appIconFav').href = dataUrl;
-  } catch(e){}
-})();
+
 
 render();
 
