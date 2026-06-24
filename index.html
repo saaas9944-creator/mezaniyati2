@@ -273,7 +273,7 @@ body.kb-open{padding-bottom:0;}
 </head>
 <body>
 <div id="monthPulse" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:8888;pointer-events:none;opacity:0;">
-  <img id="monthPulseIcon" src="icon.png" style="width:220px;height:220px;border-radius:0;box-shadow:0 0 60px rgba(88,166,255,0.4);" />
+  <img id="monthPulseIcon" src="icon.png" style="width:220px;height:220px;border-radius:40px;box-shadow:0 0 60px rgba(88,166,255,0.4);" />
 </div>
 
 <div id="loginGateScreen" style="display:none;position:fixed;inset:0;background:#0d1117;z-index:10000;overflow-y:auto;padding:24px 20px;box-sizing:border-box;">
@@ -923,12 +923,14 @@ const loadCats=()=>dc(DEFAULTS);
 const loadSal=()=>10000;
 window.lsRemove('_loaded');
 let cats=loadCats(), salary=loadSal();
+let _safeToSave=false;
 let balHidden=window.lsGet('balHidden')==='1';
 
 // حمّل من Cloud عند أول فتح
 async function loadFromCloud(){
   const screen = document.getElementById('loadingScreen');
   if(!window.fbLoadCats){
+    _safeToSave=true;
     if(screen) screen.style.display='none';
     render();
     return;
@@ -955,6 +957,7 @@ async function loadFromCloud(){
     }
   }
   if(cloudSal) salary = parseFloat(cloudSal)||salary;
+  _safeToSave=true;
   if(screen) screen.style.display='none';
   await injectActiveJawwal();
   render();
@@ -1214,7 +1217,7 @@ function updateUndoBtn(){
 }
 
 async function autoSave(){
-  if(!window.fbSaveCats) return;
+  if(!window.fbSaveCats||!_safeToSave) return;
   await Promise.all([
     window.fbSaveCats(cats,CY,CM),
     window.fbSaveChecks(cats,CY,CM),
@@ -3268,6 +3271,7 @@ async function chMonth(d){
   showWaitPulse();
   await autoSave();CM+=d;
   if(CM>11){CM=0;CY++;}if(CM<0){CM=11;CY--;}
+  _safeToSave=false;
   cats=loadCats();salary=loadSal();
   await loadFromCloud();
   hideWaitPulse();
